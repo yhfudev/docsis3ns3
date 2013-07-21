@@ -1,4 +1,22 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
+/*
+ * Copyright (c) 2013 Martín Javier Di Liscia
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * Author: Martín Javier Di Liscia
+ */
 #ifndef CM_DEVICE_H
 #define CM_DEVICE_H
 
@@ -6,10 +24,11 @@
 #include "ns3/net-device.h"
 #include "ns3/node.h"
 #include "ns3/mac48-address.h"
+#include "ns3/traced-callback.h"
 
 namespace ns3 {
 
-class HFC;
+class Hfc;
 
 class CmDevice : public NetDevice
 {
@@ -43,6 +62,9 @@ public:
 	void SetReceiveCallback (ReceiveCallback cb);
 	bool SupportsSendFrom (void) const;
 	
+	void Attach(Ptr<Hfc> channel);
+	void Deattach();
+	
 private:
 	uint32_t m_channels;
 	uint32_t* m_transferRate;
@@ -51,7 +73,8 @@ private:
 	bool m_linkUp;
 	Ptr<Node> m_node;
 	Mac48Address m_address;
-	Ptr<HFC> m_channel;
+	Ptr<Hfc> m_channel;
+	TracedCallback<> m_linkChangeCallbacks;
 };
 
 }
