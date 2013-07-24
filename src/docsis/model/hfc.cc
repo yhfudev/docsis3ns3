@@ -18,6 +18,7 @@
  * Author: Martín Javier Di Liscia
  */
 #include "hfc.h"
+#include <algorithm>
 
 namespace ns3 {
 
@@ -34,7 +35,7 @@ Hfc::GetTypeId (void)
 	return tid;
 }
 
-Hfc::Hfc () : dummy(0)
+Hfc::Hfc () : m_cmts(NULL), m_upstreamChannelsAmount(1), m_downstreamChannelsAmount(1)
 {
 }
 
@@ -45,7 +46,7 @@ Hfc::~Hfc()
 Ptr<NetDevice>
 Hfc::GetDevice (uint32_t i) const
 {
-	return dummy;
+	return m_cmts;
 }
 
 
@@ -53,6 +54,55 @@ uint32_t
 Hfc::GetNDevices (void) const
 {
 	return 0;
+}
+
+void
+Hfc::Attach(Ptr<CmDevice> device)
+{
+	std::list< Ptr<CmDevice> >::iterator deviceIterator= std::find(m_cmList.begin(), m_cmList.end(), device);
+	if (deviceIterator != m_cmList.end())
+		return;
+
+	m_cmList.push_front(device);
+}
+
+void
+Hfc::Attach(Ptr<CmtsDevice> device)
+{
+	if (m_cmts)
+	{
+		m_cmts->Deattach();
+	}
+
+	m_cmts = device;
+}
+
+void
+Hfc::Deattach(Ptr<CmDevice> device)
+{
+	std::list< Ptr<CmDevice> >::iterator deviceIterator = std::find(m_cmList.begin(), m_cmList.end(), device);
+	if (deviceIterator != m_cmList.end())
+		return;
+	else
+		m_cmList.erase(deviceIterator);
+}
+
+void
+Hfc::Deattach(Ptr<CmtsDevice> device)
+{
+	m_cmts = NULL;
+}
+
+uint32_t
+Hfc::GetUpstreamChannelsAmount()
+{
+	return m_upstreamChannelsAmount;
+}
+
+uint32_t
+Hfc::GetDownstreamChannelsAmount()
+{
+	return m_downstreamChannelsAmount;
 }
 
 }

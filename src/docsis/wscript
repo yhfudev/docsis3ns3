@@ -11,7 +11,8 @@ def build(bld):
     module.source = [
         'model/docsis.cc',
         'model/hfc.cc',
-        'model/cm.cc',
+        'model/cm-device.cc',
+        'model/cmts-device.cc',
         'helper/docsis-helper.cc',
         ]
 
@@ -25,7 +26,9 @@ def build(bld):
     headers.source = [
         'model/docsis.h',
         'model/hfc.h',
-        'model/cm.h',
+        'model/cm-device.h',
+        'model/cmts-device.h',
+        'model/docsis-enums.h',
         'helper/docsis-helper.h',
         ]
 
