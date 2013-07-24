@@ -17,171 +17,165 @@
  *
  * Author: Martín Javier Di Liscia
  */
-#include "cm-device.h"
+#include "cmts-device.h"
 #include "hfc.h"
 
 namespace ns3 {
 
 TypeId
-CmDevice::GetTypeId (void)
+CmtsDevice::GetTypeId (void)
 {
-	static TypeId tid = TypeId("ns3::CmDevice")
+	static TypeId tid = TypeId("ns3::CmtsDevice")
 		.SetParent<NetDevice> ()
-		.AddConstructor<CmDevice> ()
+		.AddConstructor<CmtsDevice> ()
 		;
-	
+
 	return tid;
 }
 
-CmDevice::CmDevice () : m_channels(0), m_transferRate(NULL), m_deviceIndex(0), m_mtu(1), m_linkUp(false), m_node(NULL), m_address(NULL), m_channel(NULL), m_uChannelStatus(kDown)
+CmtsDevice::CmtsDevice () : m_channels(0), m_transferRate(NULL), m_deviceIndex(0), m_mtu(1), m_linkUp(false), m_node(NULL), m_address(NULL), m_channel(NULL), m_dChannelsStatus(0)
 {
 }
 
-CmDevice::~CmDevice ()
+CmtsDevice::~CmtsDevice ()
 {
 }
 
 void
-CmDevice::AddLinkChangeCallback (Callback<void> callback)
+CmtsDevice::AddLinkChangeCallback (Callback<void> callback)
 {
 	m_linkChangeCallbacks.ConnectWithoutContext(callback);
 }
 
 
 Address
-CmDevice::GetAddress (void) const
+CmtsDevice::GetAddress (void) const
 {
 	return m_address;
 }
 
 
 Address
-CmDevice::GetBroadcast (void) const
+CmtsDevice::GetBroadcast (void) const
 {
 	return Mac48Address ("ff:ff:ff:ff:ff:ff");
 }
 
 
 Ptr< Channel >
-CmDevice::GetChannel (void) const
+CmtsDevice::GetChannel (void) const
 {
 	return m_channel;
 }
 
 
 uint32_t
-CmDevice::GetIfIndex (void) const
+CmtsDevice::GetIfIndex (void) const
 {
 	return m_deviceIndex;
 }
 
 
 uint16_t
-CmDevice::GetMtu (void) const
+CmtsDevice::GetMtu (void) const
 {
 	return m_mtu;
 }
 
 
 Address
-CmDevice::GetMulticast (Ipv4Address multicastGroup) const
+CmtsDevice::GetMulticast (Ipv4Address multicastGroup) const
 {
 	return Mac48Address ("00:00:00:00:00:00");
 }
 
 
 Address
-CmDevice::GetMulticast (Ipv6Address addr) const
+CmtsDevice::GetMulticast (Ipv6Address addr) const
 {
 	return Mac48Address ("00:00:00:00:00:00");
 }
 
 
 Ptr< Node >
-CmDevice::GetNode (void) const
+CmtsDevice::GetNode (void) const
 {
 	return m_node;
 }
 
 
 bool
-CmDevice::IsBridge (void) const
+CmtsDevice::IsBridge (void) const
 {
 	return false;
 }
 
 
 bool
-CmDevice::IsBroadcast (void) const
+CmtsDevice::IsBroadcast (void) const
 {
 	return false;
 }
 
 
 bool
-CmDevice::IsLinkUp (void) const
+CmtsDevice::IsLinkUp (void) const
 {
 	return m_linkUp;
 }
 
 
 bool
-CmDevice::IsMulticast (void) const
+CmtsDevice::IsMulticast (void) const
 {
 	return false;
 }
 
 
 bool
-CmDevice::IsPointToPoint (void) const
+CmtsDevice::IsPointToPoint (void) const
 {
 	return true;
 }
 
 
 bool
-CmDevice::NeedsArp (void) const
+CmtsDevice::NeedsArp (void) const
 {
 	return false;
 }
 
 
 bool
-CmDevice::Send (Ptr< Packet > packet, const Address &dest, uint16_t protocolNumber)
+CmtsDevice::Send (Ptr< Packet > packet, const Address &dest, uint16_t protocolNumber)
 {
-	m_packetQueue.push_back(packet);
-	if (m_uChannelStatus == kIdle)
-	{
-		TransmitStart(m_packetQueue.front());
-		m_packetQueue.pop_front();
-	}
 	return true;
 }
 
 
 bool
-CmDevice::SendFrom (Ptr< Packet > packet, const Address &source, const Address &dest, uint16_t protocolNumber)
+CmtsDevice::SendFrom (Ptr< Packet > packet, const Address &source, const Address &dest, uint16_t protocolNumber)
 {
 	return true;
 }
 
 
 void
-CmDevice::SetAddress (Address address)
+CmtsDevice::SetAddress (Address address)
 {
 	m_address = Mac48Address::ConvertFrom (address);
 }
 
 
 void
-CmDevice::SetIfIndex (const uint32_t index)
+CmtsDevice::SetIfIndex (const uint32_t index)
 {
 	m_deviceIndex = index;
 }
 
 
 bool
-CmDevice::SetMtu (const uint16_t mtu)
+CmtsDevice::SetMtu (const uint16_t mtu)
 {
 	m_mtu = mtu;
 	return true;
@@ -189,34 +183,34 @@ CmDevice::SetMtu (const uint16_t mtu)
 
 
 void
-CmDevice::SetNode (Ptr< Node > node)
+CmtsDevice::SetNode (Ptr< Node > node)
 {
 	m_node = node;
 }
 
 
 void
-CmDevice::SetPromiscReceiveCallback (PromiscReceiveCallback cb)
+CmtsDevice::SetPromiscReceiveCallback (PromiscReceiveCallback cb)
 {
 	return;
 }
 
 
 void
-CmDevice::SetReceiveCallback (ReceiveCallback cb)
+CmtsDevice::SetReceiveCallback (ReceiveCallback cb)
 {
 	return;
 }
 
 
 bool
-CmDevice::SupportsSendFrom (void) const
+CmtsDevice::SupportsSendFrom (void) const
 {
 	return false;
 }
 
 void
-CmDevice::Attach(Ptr<Hfc> channel)
+CmtsDevice::Attach(Ptr<Hfc> channel)
 {
 	if (!m_channel)
 	{
@@ -225,45 +219,23 @@ CmDevice::Attach(Ptr<Hfc> channel)
 
 	m_channel = channel;
 	m_channel->Attach(this);
-	m_uChannelStatus = kIdle;
+
+	m_dChannelsStatus.resize((int)m_channel->GetDownstreamChannelsAmount());
+
 	m_linkUp = true;
 	m_linkChangeCallbacks();
 }
 
 void
-CmDevice::Deattach()
+CmtsDevice::Deattach()
 {
 	if (!m_channel)
 		return;
 
 	m_channel->Deattach(this);
 	m_channel = NULL;
-	m_uChannelStatus = kDown;
 	m_linkUp = false;
 	m_linkChangeCallbacks();
-}
-
-bool
-CmDevice::Recieve(Ptr< Packet > packet)
-{
-	return true;
-}
-
-void
-CmDevice::TransmitStart(Ptr< Packet > packet)
-{
-	m_uChannelStatus = kBusy;
-}
-
-void
-CmDevice::TransmitComplete()
-{
-	m_uChannelStatus = kIdle;
-	if (!m_packetQueue.empty())
-	{
-		TransmitStart(m_packetQueue.front());
-		m_packetQueue.pop_front();
-	}
 }
 
 }

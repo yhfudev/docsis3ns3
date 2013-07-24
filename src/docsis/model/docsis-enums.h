@@ -17,45 +17,20 @@
  *
  * Author: Martín Javier Di Liscia
  */
-#ifndef HFC_H
-#define HFC_H
 
-#include "docsis-enums.h"
-#include "cm-device.h"
-#include "cmts-device.h"
-#include "ns3/channel.h"
-#include "ns3/ptr.h"
-#include <list>
+#ifndef DOCSIS_ENUMS_H_
+#define DOCSIS_ENUMS_H_
 
-namespace ns3 {
-
-class CmDevice;
-
-class Hfc : public Channel
+namespace ns3
 {
-public:
-	static TypeId GetTypeId (void);
-	Hfc ();
-	virtual ~Hfc ();
-	
-	Ptr<NetDevice> GetDevice (uint32_t i ) const;
-	uint32_t GetNDevices (void) const;
 
-	void Attach(Ptr<CmDevice> device);
-	void Attach(Ptr<CmtsDevice> device);
-	void Deattach(Ptr<CmDevice> device);
-	void Deattach(Ptr<CmtsDevice> device);
-
-	uint32_t GetUpstreamChannelsAmount();
-	uint32_t GetDownstreamChannelsAmount();
-
-private:
-	Ptr<CmtsDevice> m_cmts;
-	std::list< Ptr<CmDevice> > m_cmList;
-	uint32_t m_upstreamChannelsAmount;
-	uint32_t m_downstreamChannelsAmount;
+enum DocsisChannelStatus
+{
+	kIdle,
+	kBusy,
+	kDown,
 };
 
 }
 
-#endif /* HFC_H */
+#endif /* DOCSIS_ENUMS_H_ */

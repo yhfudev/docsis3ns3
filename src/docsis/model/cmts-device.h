@@ -17,12 +17,10 @@
  *
  * Author: Martín Javier Di Liscia
  */
-#ifndef CM_DEVICE_H
-#define CM_DEVICE_H
+#ifndef CMTS_DEVICE_H
+#define CMTS_DEVICE_H
 
-#include <list>
 #include "docsis-enums.h"
-#include "ns3/packet.h"
 #include "ns3/net-device.h"
 #include "ns3/node.h"
 #include "ns3/mac48-address.h"
@@ -31,14 +29,15 @@
 namespace ns3 {
 
 class Hfc;
+class CmDevice;
 
-class CmDevice : public NetDevice
+class CmtsDevice : public NetDevice
 {
 public:
 	static TypeId GetTypeId (void);
-	CmDevice ();
-	~CmDevice ();
-	
+	CmtsDevice ();
+	~CmtsDevice ();
+
 	void AddLinkChangeCallback (Callback<void> callback);
 	Address GetAddress (void) const;
 	Address GetBroadcast (void) const;
@@ -63,12 +62,12 @@ public:
 	void SetPromiscReceiveCallback (PromiscReceiveCallback cb);
 	void SetReceiveCallback (ReceiveCallback cb);
 	bool SupportsSendFrom (void) const;
-	
+
 	void Attach(Ptr<Hfc> channel);
 	void Deattach();
 
-	bool Recieve(Ptr< Packet > packet);
-	void TransmitStart(Ptr< Packet > packet);
+	bool Recieve(Ptr<Packet> packet, Ptr<CmDevice> sender);
+	void TransmitStart(Ptr< Packet > packet, Ptr<CmDevice> destiny);
 	void TransmitComplete();
 
 private:
@@ -82,10 +81,10 @@ private:
 	Ptr<Hfc> m_channel;
 	TracedCallback<> m_linkChangeCallbacks;
 	std::list< Ptr<Packet> > m_packetQueue;
-	DocsisChannelStatus m_uChannelStatus;
+	std::vector<DocsisChannelStatus> m_dChannelsStatus;
 };
 
 }
 
-#endif /* CM_DEVICE_H */
+#endif /* CMTS_DEVICE_H */
 
