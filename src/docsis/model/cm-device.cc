@@ -19,6 +19,8 @@
  */
 #include "cm-device.h"
 #include "hfc.h"
+#include "ns3/simulator.h"
+#include "ns3/nstime.h"
 
 namespace ns3 {
 
@@ -29,7 +31,7 @@ CmDevice::GetTypeId (void)
 		.SetParent<NetDevice> ()
 		.AddConstructor<CmDevice> ()
 		;
-	
+
 	return tid;
 }
 
@@ -205,7 +207,7 @@ CmDevice::SetPromiscReceiveCallback (PromiscReceiveCallback cb)
 void
 CmDevice::SetReceiveCallback (ReceiveCallback cb)
 {
-	return;
+	m_rxCallback = cb;
 }
 
 
@@ -244,15 +246,23 @@ CmDevice::Deattach()
 }
 
 bool
-CmDevice::Recieve(Ptr< Packet > packet)
+CmDevice::Receive(Ptr< Packet > packet)
 {
-	return true;
+	uint16_t protocol = 0;
+	Address address;
+
+	return m_rxCallback(this, packet, protocol, address);
 }
 
 void
 CmDevice::TransmitStart(Ptr< Packet > packet)
 {
 	m_uChannelStatus = kBusy;
+
+	Time txTime = Seconds (m_channel->GetUpstreamDataRate(0).CalculateTxTime(packet->GetSize()));
+
+	Simulator::Schedule(txTime, &CmDevice::TransmitComplete, this);
+	m_channel->UpTransmitStart(0, packet, this, txTime);
 }
 
 void

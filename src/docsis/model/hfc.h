@@ -25,6 +25,7 @@
 #include "cmts-device.h"
 #include "ns3/channel.h"
 #include "ns3/ptr.h"
+#include "ns3/data-rate.h"
 #include <list>
 
 namespace ns3 {
@@ -46,14 +47,21 @@ public:
 	void Deattach(Ptr<CmDevice> device);
 	void Deattach(Ptr<CmtsDevice> device);
 
+	DataRate GetUpstreamDataRate(int channel);
+	DataRate GetDownstreamDataRate(int channel);
+
 	uint32_t GetUpstreamChannelsAmount();
 	uint32_t GetDownstreamChannelsAmount();
+
+	void UpTransmitStart(int channel, Ptr<Packet> p, Ptr<CmDevice> cm, Time txTime);
+	void DownTransmitStart(int channel, Ptr<Packet> p, Ptr<CmDevice> cm, Time txTime);
 
 private:
 	Ptr<CmtsDevice> m_cmts;
 	std::list< Ptr<CmDevice> > m_cmList;
 	uint32_t m_upstreamChannelsAmount;
 	uint32_t m_downstreamChannelsAmount;
+	DataRate m_stubDataRate;
 };
 
 }
