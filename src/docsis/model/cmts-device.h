@@ -20,6 +20,7 @@
 #ifndef CMTS_DEVICE_H
 #define CMTS_DEVICE_H
 
+#include <map>
 #include "docsis-enums.h"
 #include "ns3/net-device.h"
 #include "ns3/node.h"
@@ -30,6 +31,12 @@ namespace ns3 {
 
 class Hfc;
 class CmDevice;
+
+struct PacketAddress
+{
+	Ptr<Packet> packet;
+	Address address;
+};
 
 class CmtsDevice : public NetDevice
 {
@@ -65,8 +72,10 @@ public:
 
 	void Attach(Ptr<Hfc> channel);
 	void Deattach();
+	void CmAttached(Ptr<CmDevice> cm);
+	void CmDeattached(Ptr<CmDevice> cm);
 
-	bool Recieve(Ptr<Packet> packet, Ptr<CmDevice> sender);
+	bool Receive(Ptr<Packet> packet, Ptr<CmDevice> sender);
 	void TransmitStart(Ptr< Packet > packet, Ptr<CmDevice> destiny);
 	void TransmitComplete();
 
@@ -80,8 +89,10 @@ private:
 	Mac48Address m_address;
 	Ptr<Hfc> m_channel;
 	TracedCallback<> m_linkChangeCallbacks;
-	std::list< Ptr<Packet> > m_packetQueue;
+	ReceiveCallback m_rxCallback;
+	std::list< PacketAddress > m_packetQueue;
 	std::vector<DocsisChannelStatus> m_dChannelsStatus;
+	std::map< Address, Ptr<CmDevice> > m_connectedDevices;
 };
 
 }

@@ -67,7 +67,7 @@ public:
 	void Attach(Ptr<Hfc> channel);
 	void Deattach();
 
-	bool Recieve(Ptr< Packet > packet);
+	bool Receive(Ptr< Packet > packet);
 	void TransmitStart(Ptr< Packet > packet);
 	void TransmitComplete();
 
@@ -80,6 +80,7 @@ private:
 	Ptr<Node> m_node;
 	Mac48Address m_address;
 	Ptr<Hfc> m_channel;
+	ReceiveCallback m_rxCallback;
 	TracedCallback<> m_linkChangeCallbacks;
 	std::list< Ptr<Packet> > m_packetQueue;
 	DocsisChannelStatus m_uChannelStatus;

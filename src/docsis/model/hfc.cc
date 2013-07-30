@@ -18,7 +18,13 @@
  * Author: Martín Javier Di Liscia
  */
 #include "hfc.h"
+#include "cmts-device.h"
+#include "cm-device.h"
 #include <algorithm>
+#include <assert.h>
+#include "ns3/simulator.h"
+
+#define Mbps *1048576
 
 namespace ns3 {
 
@@ -35,7 +41,7 @@ Hfc::GetTypeId (void)
 	return tid;
 }
 
-Hfc::Hfc () : m_cmts(NULL), m_upstreamChannelsAmount(1), m_downstreamChannelsAmount(1)
+Hfc::Hfc () : m_cmts(NULL), m_upstreamChannelsAmount(1), m_downstreamChannelsAmount(1), m_stubDataRate(40 Mbps)
 {
 }
 
@@ -59,11 +65,14 @@ Hfc::GetNDevices (void) const
 void
 Hfc::Attach(Ptr<CmDevice> device)
 {
+	assert(m_cmts != NULL);
+
 	std::list< Ptr<CmDevice> >::iterator deviceIterator= std::find(m_cmList.begin(), m_cmList.end(), device);
 	if (deviceIterator != m_cmList.end())
 		return;
 
 	m_cmList.push_front(device);
+	m_cmts->CmAttached(device);
 }
 
 void
@@ -85,12 +94,32 @@ Hfc::Deattach(Ptr<CmDevice> device)
 		return;
 	else
 		m_cmList.erase(deviceIterator);
+
+	if (m_cmts != NULL)
+		m_cmts->CmDeattached(device);
 }
 
 void
 Hfc::Deattach(Ptr<CmtsDevice> device)
 {
 	m_cmts = NULL;
+
+	for(std::list< Ptr<CmDevice> >::iterator deviceIterator = m_cmList.begin(); deviceIterator != m_cmList.end(); deviceIterator++)
+	{
+		(*deviceIterator)->Deattach();
+	}
+}
+
+DataRate
+Hfc::GetUpstreamDataRate(int channel)
+{
+	return m_stubDataRate;
+}
+
+DataRate
+Hfc::GetDownstreamDataRate(int channel)
+{
+	return m_stubDataRate;
 }
 
 uint32_t
@@ -103,6 +132,17 @@ uint32_t
 Hfc::GetDownstreamChannelsAmount()
 {
 	return m_downstreamChannelsAmount;
+}
+
+void
+Hfc::UpTransmitStart(int channel, Ptr<Packet> p, Ptr<CmDevice> cm, Time txTime)
+{
+  Simulator::ScheduleWithContext(m_cmts->GetNode()->GetId(), txTime, &CmtsDevice::Receive, m_cmts, p, cm);
+}
+
+void Hfc::DownTransmitStart(int channel, Ptr<Packet> p, Ptr<CmDevice> cm, Time txTime)
+{
+  Simulator::ScheduleWithContext(m_cmts->GetNode()->GetId(), txTime, &CmDevice::Receive, cm, p);
 }
 
 }

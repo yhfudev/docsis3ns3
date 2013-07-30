@@ -19,6 +19,7 @@
  */
 #include "cmts-device.h"
 #include "hfc.h"
+#include "ns3/simulator.h"
 
 namespace ns3 {
 
@@ -149,6 +150,16 @@ CmtsDevice::NeedsArp (void) const
 bool
 CmtsDevice::Send (Ptr< Packet > packet, const Address &dest, uint16_t protocolNumber)
 {
+	PacketAddress pa;
+	pa.packet = packet;
+	pa.address = dest;
+
+	m_packetQueue.push_back(pa);
+	if (m_dChannelsStatus[0] == kIdle)
+	{
+		TransmitStart(m_packetQueue.front().packet, m_connectedDevices[m_packetQueue.front().address]);
+		m_packetQueue.pop_front();
+	}
 	return true;
 }
 
@@ -199,7 +210,7 @@ CmtsDevice::SetPromiscReceiveCallback (PromiscReceiveCallback cb)
 void
 CmtsDevice::SetReceiveCallback (ReceiveCallback cb)
 {
-	return;
+	m_rxCallback = cb;
 }
 
 
@@ -236,6 +247,48 @@ CmtsDevice::Deattach()
 	m_channel = NULL;
 	m_linkUp = false;
 	m_linkChangeCallbacks();
+}
+
+void
+CmtsDevice::CmAttached(Ptr<CmDevice> cm)
+{
+	m_connectedDevices[cm->GetAddress()] = cm;
+}
+
+void
+CmtsDevice::CmDeattached(Ptr<CmDevice> cm)
+{
+	m_connectedDevices.erase(cm->GetAddress());
+}
+
+bool
+CmtsDevice::Receive(Ptr< Packet > packet, Ptr<CmDevice> sender)
+{
+	uint16_t protocol = 0;
+	Address address;
+	return m_rxCallback(this, packet, protocol, address);
+}
+
+void
+CmtsDevice::TransmitStart(Ptr< Packet > packet, Ptr<CmDevice> destiny)
+{
+	m_dChannelsStatus[0] = kBusy;
+
+	Time txTime = Seconds (m_channel->GetUpstreamDataRate(0).CalculateTxTime(packet->GetSize()));
+
+	Simulator::Schedule(txTime, &CmtsDevice::TransmitComplete, this);
+	m_channel->DownTransmitStart(0, packet, destiny, txTime);
+}
+
+void
+CmtsDevice::TransmitComplete()
+{
+	m_dChannelsStatus[0] = kIdle;
+	if (!m_packetQueue.empty())
+	{
+		TransmitStart(m_packetQueue.front().packet, m_connectedDevices[m_packetQueue.front().address]);
+		m_packetQueue.pop_front();
+	}
 }
 
 }
