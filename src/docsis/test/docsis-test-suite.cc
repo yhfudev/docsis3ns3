@@ -21,7 +21,7 @@ public:
 
 private:
   virtual void DoRun (void);
-  void SendOnePacket(Ptr<CmtsDevice> device);
+  void SendOnePacket(Ptr<NetDevice> device, Address address);
 };
 
 // Add some help text to this case to describe what it is intended to test
@@ -37,10 +37,10 @@ DocsisTestCase1::~DocsisTestCase1 ()
 }
 
 void
-DocsisTestCase1::SendOnePacket (Ptr<CmtsDevice> device)
+DocsisTestCase1::SendOnePacket (Ptr<NetDevice> device, Address address)
 {
   Ptr<Packet> p = Create<Packet> ();
-  device->Send (p, device->GetBroadcast (), 0x800);
+  device->Send (p, address, 0x800);
 }
 
 //
@@ -69,7 +69,7 @@ DocsisTestCase1::DoRun (void)
 	  a->AddDevice (devA);
 	  b->AddDevice (devB);
 
-	  Simulator::Schedule (Seconds (1.0), &DocsisTestCase1::SendOnePacket, this, devA);
+	  Simulator::Schedule (Seconds (1.0), &DocsisTestCase1::SendOnePacket, this, devA, devB->GetAddress());
 
 	  Simulator::Run ();
 
