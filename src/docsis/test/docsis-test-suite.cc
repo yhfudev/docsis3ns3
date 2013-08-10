@@ -5,6 +5,8 @@
 
 // An essential include is test.h
 #include "ns3/test.h"
+#include "ns3/simulator.h"
+
 
 // Do not put your test classes in namespace ns3.  You may find it useful
 // to use the using directive to access the ns3 namespace directly
@@ -19,11 +21,12 @@ public:
 
 private:
   virtual void DoRun (void);
+  void SendOnePacket(Ptr<CmtsDevice> device);
 };
 
 // Add some help text to this case to describe what it is intended to test
 DocsisTestCase1::DocsisTestCase1 ()
-  : TestCase ("Docsis test case (does nothing)")
+  : TestCase ("Docsis test case")
 {
 }
 
@@ -33,6 +36,13 @@ DocsisTestCase1::~DocsisTestCase1 ()
 {
 }
 
+void
+DocsisTestCase1::SendOnePacket (Ptr<CmtsDevice> device)
+{
+  Ptr<Packet> p = Create<Packet> ();
+  device->Send (p, device->GetBroadcast (), 0x800);
+}
+
 //
 // This method is the pure virtual method from class TestCase that every
 // TestCase must implement
@@ -40,10 +50,30 @@ DocsisTestCase1::~DocsisTestCase1 ()
 void
 DocsisTestCase1::DoRun (void)
 {
-  // A wide variety of test macros are available in src/core/test.h
+/*  // A wide variety of test macros are available in src/core/test.h
   NS_TEST_ASSERT_MSG_EQ (true, true, "true doesn't equal true for some reason");
   // Use this one for floating point comparisons
-  NS_TEST_ASSERT_MSG_EQ_TOL (0.01, 0.01, 0.001, "Numbers are not equal within tolerance");
+  NS_TEST_ASSERT_MSG_EQ_TOL (0.01, 0.01, 0.001, "Numbers are not equal within tolerance");*/
+
+	  Ptr<Node> a = CreateObject<Node> ();
+	  Ptr<Node> b = CreateObject<Node> ();
+	  Ptr<CmtsDevice> devA = CreateObject<CmtsDevice> ();
+	  Ptr<CmDevice> devB = CreateObject<CmDevice> ();
+	  Ptr<Hfc> channel = CreateObject<Hfc> ();
+
+	  devA->Attach (channel);
+	  devA->SetAddress (Mac48Address::Allocate ());
+	  devB->Attach (channel);
+	  devB->SetAddress (Mac48Address::Allocate ());
+
+	  a->AddDevice (devA);
+	  b->AddDevice (devB);
+
+	  Simulator::Schedule (Seconds (1.0), &DocsisTestCase1::SendOnePacket, this, devA);
+
+	  Simulator::Run ();
+
+	  Simulator::Destroy ();
 }
 
 // The TestSuite class names the TestSuite, identifies what type of TestSuite,

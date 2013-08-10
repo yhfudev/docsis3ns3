@@ -47,6 +47,8 @@ public:
 	void Deattach(Ptr<CmDevice> device);
 	void Deattach(Ptr<CmtsDevice> device);
 
+	void CmChangedAddress(Ptr<CmDevice> device, Address old_address);
+
 	DataRate GetUpstreamDataRate(int channel);
 	DataRate GetDownstreamDataRate(int channel);
 

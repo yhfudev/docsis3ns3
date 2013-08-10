@@ -17,9 +17,13 @@
  *
  * Author: Martín Javier Di Liscia
  */
+
+#include "ns3/log.h"
 #include "cmts-device.h"
 #include "hfc.h"
 #include "ns3/simulator.h"
+
+NS_LOG_COMPONENT_DEFINE ("CmtsNetDevice");
 
 namespace ns3 {
 
@@ -34,7 +38,7 @@ CmtsDevice::GetTypeId (void)
 	return tid;
 }
 
-CmtsDevice::CmtsDevice () : m_channels(0), m_transferRate(NULL), m_deviceIndex(0), m_mtu(1), m_linkUp(false), m_node(NULL), m_address(NULL), m_channel(NULL), m_dChannelsStatus(0)
+CmtsDevice::CmtsDevice () : m_channels(0), m_transferRate(NULL), m_deviceIndex(0), m_mtu(1), m_linkUp(false), m_node(NULL), m_channel(NULL), m_dChannelsStatus(0)
 {
 }
 
@@ -150,6 +154,8 @@ CmtsDevice::NeedsArp (void) const
 bool
 CmtsDevice::Send (Ptr< Packet > packet, const Address &dest, uint16_t protocolNumber)
 {
+	NS_LOG_FUNCTION (this << packet << dest << protocolNumber);
+
 	PacketAddress pa;
 	pa.packet = packet;
 	pa.address = dest;
@@ -174,6 +180,8 @@ CmtsDevice::SendFrom (Ptr< Packet > packet, const Address &source, const Address
 void
 CmtsDevice::SetAddress (Address address)
 {
+	NS_LOG_FUNCTION (this << address);
+
 	m_address = Mac48Address::ConvertFrom (address);
 }
 
@@ -181,6 +189,8 @@ CmtsDevice::SetAddress (Address address)
 void
 CmtsDevice::SetIfIndex (const uint32_t index)
 {
+	NS_LOG_FUNCTION (this << index);
+
 	m_deviceIndex = index;
 }
 
@@ -188,6 +198,8 @@ CmtsDevice::SetIfIndex (const uint32_t index)
 bool
 CmtsDevice::SetMtu (const uint16_t mtu)
 {
+	NS_LOG_FUNCTION (this << mtu);
+
 	m_mtu = mtu;
 	return true;
 }
@@ -196,6 +208,8 @@ CmtsDevice::SetMtu (const uint16_t mtu)
 void
 CmtsDevice::SetNode (Ptr< Node > node)
 {
+	NS_LOG_FUNCTION (this << node);
+
 	m_node = node;
 }
 
@@ -223,6 +237,8 @@ CmtsDevice::SupportsSendFrom (void) const
 void
 CmtsDevice::Attach(Ptr<Hfc> channel)
 {
+	NS_LOG_FUNCTION (this << channel);
+
 	if (!m_channel)
 	{
 		Deattach();
@@ -240,6 +256,8 @@ CmtsDevice::Attach(Ptr<Hfc> channel)
 void
 CmtsDevice::Deattach()
 {
+	NS_LOG_FUNCTION (this);
+
 	if (!m_channel)
 		return;
 
@@ -261,9 +279,18 @@ CmtsDevice::CmDeattached(Ptr<CmDevice> cm)
 	m_connectedDevices.erase(cm->GetAddress());
 }
 
+void
+CmtsDevice::CmChangedAddress(Ptr<CmDevice> cm, Address old_address)
+{
+	m_connectedDevices.erase(old_address);
+	m_connectedDevices[cm->GetAddress()] = cm;
+}
+
 bool
 CmtsDevice::Receive(Ptr< Packet > packet, Ptr<CmDevice> sender)
 {
+	NS_LOG_FUNCTION (this << packet << sender);
+
 	uint16_t protocol = 0;
 	Address address;
 	return m_rxCallback(this, packet, protocol, address);
@@ -272,6 +299,8 @@ CmtsDevice::Receive(Ptr< Packet > packet, Ptr<CmDevice> sender)
 void
 CmtsDevice::TransmitStart(Ptr< Packet > packet, Ptr<CmDevice> destiny)
 {
+	NS_LOG_FUNCTION (this << packet << destiny);
+
 	m_dChannelsStatus[0] = kBusy;
 
 	Time txTime = Seconds (m_channel->GetUpstreamDataRate(0).CalculateTxTime(packet->GetSize()));
@@ -283,6 +312,8 @@ CmtsDevice::TransmitStart(Ptr< Packet > packet, Ptr<CmDevice> destiny)
 void
 CmtsDevice::TransmitComplete()
 {
+	NS_LOG_FUNCTION (this);
+
 	m_dChannelsStatus[0] = kIdle;
 	if (!m_packetQueue.empty())
 	{

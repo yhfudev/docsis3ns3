@@ -110,6 +110,12 @@ Hfc::Deattach(Ptr<CmtsDevice> device)
 	}
 }
 
+void
+Hfc::CmChangedAddress(Ptr<CmDevice> device, Address old_address)
+{
+	m_cmts->CmChangedAddress(device, old_address);
+}
+
 DataRate
 Hfc::GetUpstreamDataRate(int channel)
 {
@@ -142,7 +148,7 @@ Hfc::UpTransmitStart(int channel, Ptr<Packet> p, Ptr<CmDevice> cm, Time txTime)
 
 void Hfc::DownTransmitStart(int channel, Ptr<Packet> p, Ptr<CmDevice> cm, Time txTime)
 {
-  Simulator::ScheduleWithContext(m_cmts->GetNode()->GetId(), txTime, &CmDevice::Receive, cm, p);
+  Simulator::ScheduleWithContext(cm->GetNode()->GetId(), txTime, &CmDevice::Receive, cm, p);
 }
 
 }
