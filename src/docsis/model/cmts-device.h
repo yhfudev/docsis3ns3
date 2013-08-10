@@ -74,6 +74,7 @@ public:
 	void Deattach();
 	void CmAttached(Ptr<CmDevice> cm);
 	void CmDeattached(Ptr<CmDevice> cm);
+	void CmChangedAddress(Ptr<CmDevice> cm, Address old_address);
 
 	bool Receive(Ptr<Packet> packet, Ptr<CmDevice> sender);
 	void TransmitStart(Ptr< Packet > packet, Ptr<CmDevice> destiny);

@@ -17,10 +17,14 @@
  *
  * Author: Martín Javier Di Liscia
  */
+
+#include "ns3/log.h"
 #include "cm-device.h"
 #include "hfc.h"
 #include "ns3/simulator.h"
 #include "ns3/nstime.h"
+
+NS_LOG_COMPONENT_DEFINE ("CmNetDevice");
 
 namespace ns3 {
 
@@ -35,7 +39,7 @@ CmDevice::GetTypeId (void)
 	return tid;
 }
 
-CmDevice::CmDevice () : m_channels(0), m_transferRate(NULL), m_deviceIndex(0), m_mtu(1), m_linkUp(false), m_node(NULL), m_address(NULL), m_channel(NULL), m_uChannelStatus(kDown)
+CmDevice::CmDevice () : m_channels(0), m_transferRate(NULL), m_deviceIndex(0), m_mtu(1), m_linkUp(false), m_node(NULL), m_channel(NULL), m_uChannelStatus(kDown)
 {
 }
 
@@ -151,6 +155,8 @@ CmDevice::NeedsArp (void) const
 bool
 CmDevice::Send (Ptr< Packet > packet, const Address &dest, uint16_t protocolNumber)
 {
+	NS_LOG_FUNCTION (this << packet << dest << protocolNumber);
+
 	m_packetQueue.push_back(packet);
 	if (m_uChannelStatus == kIdle)
 	{
@@ -171,13 +177,17 @@ CmDevice::SendFrom (Ptr< Packet > packet, const Address &source, const Address &
 void
 CmDevice::SetAddress (Address address)
 {
+	NS_LOG_FUNCTION (this << address);
+	Address old_address = m_address;
 	m_address = Mac48Address::ConvertFrom (address);
+	m_channel->CmChangedAddress(this, old_address);
 }
 
 
 void
 CmDevice::SetIfIndex (const uint32_t index)
 {
+	NS_LOG_FUNCTION (this << index);
 	m_deviceIndex = index;
 }
 
@@ -185,6 +195,7 @@ CmDevice::SetIfIndex (const uint32_t index)
 bool
 CmDevice::SetMtu (const uint16_t mtu)
 {
+	NS_LOG_FUNCTION (this << mtu);
 	m_mtu = mtu;
 	return true;
 }
@@ -193,6 +204,7 @@ CmDevice::SetMtu (const uint16_t mtu)
 void
 CmDevice::SetNode (Ptr< Node > node)
 {
+	NS_LOG_FUNCTION (this << node);
 	m_node = node;
 }
 
@@ -220,6 +232,8 @@ CmDevice::SupportsSendFrom (void) const
 void
 CmDevice::Attach(Ptr<Hfc> channel)
 {
+	NS_LOG_FUNCTION (this << channel);
+
 	if (!m_channel)
 	{
 		Deattach();
@@ -235,6 +249,8 @@ CmDevice::Attach(Ptr<Hfc> channel)
 void
 CmDevice::Deattach()
 {
+	NS_LOG_FUNCTION (this);
+
 	if (!m_channel)
 		return;
 
@@ -248,6 +264,8 @@ CmDevice::Deattach()
 bool
 CmDevice::Receive(Ptr< Packet > packet)
 {
+	NS_LOG_FUNCTION (this << packet);
+
 	uint16_t protocol = 0;
 	Address address;
 
@@ -257,6 +275,8 @@ CmDevice::Receive(Ptr< Packet > packet)
 void
 CmDevice::TransmitStart(Ptr< Packet > packet)
 {
+	NS_LOG_FUNCTION (this << packet);
+
 	m_uChannelStatus = kBusy;
 
 	Time txTime = Seconds (m_channel->GetUpstreamDataRate(0).CalculateTxTime(packet->GetSize()));
@@ -268,6 +288,8 @@ CmDevice::TransmitStart(Ptr< Packet > packet)
 void
 CmDevice::TransmitComplete()
 {
+	NS_LOG_FUNCTION (this);
+
 	m_uChannelStatus = kIdle;
 	if (!m_packetQueue.empty())
 	{
