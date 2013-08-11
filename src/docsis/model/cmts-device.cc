@@ -33,12 +33,34 @@ CmtsDevice::GetTypeId (void)
 	static TypeId tid = TypeId("ns3::CmtsDevice")
 		.SetParent<NetDevice> ()
 		.AddConstructor<CmtsDevice> ()
+		.AddTraceSource("MacTx",
+						"Trace source indicating a packet has arrived for transmission by this device",
+						MakeTraceSourceAccessor(&CmtsDevice::m_sendTrace) )
+		.AddTraceSource("MacRx",
+						"A packet has been received by this device, has been passed up from the physical layer "
+                     	"and is being forwarded up the local protocol stack.  This is a non-promiscuous trace,",
+						MakeTraceSourceAccessor(&CmtsDevice::m_receiveTrace) )
+		.AddTraceSource("PhyTxBegin",
+						"Trace source indicating a packet has begun transmitting over the channel",
+						MakeTraceSourceAccessor(&CmtsDevice::m_transmitStartTrace) )
+		.AddTraceSource("PhyTxEnd",
+						"Trace source indicating a packet has been completely transmitted over the channel",
+						MakeTraceSourceAccessor(&CmtsDevice::m_transmitCompleteTrace) )
+		.AddTraceSource("ChannelConnect",
+						"Trace source indicating a connection to a channel",
+						MakeTraceSourceAccessor(&CmtsDevice::m_attachTrace) )
+		.AddTraceSource("ChannelDisconnect",
+						"Trace source indicating a disconnection from a channel",
+						MakeTraceSourceAccessor(&CmtsDevice::m_deattachTrace) )
+		.AddTraceSource("AddressChange",
+						"Trace source indicating an address change",
+						MakeTraceSourceAccessor(&CmtsDevice::m_addressChangeTrace) )
 		;
 
 	return tid;
 }
 
-CmtsDevice::CmtsDevice () : m_channels(0), m_transferRate(NULL), m_deviceIndex(0), m_mtu(1), m_linkUp(false), m_node(NULL), m_channel(NULL), m_dChannelsStatus(0)
+CmtsDevice::CmtsDevice () : m_channels(0), m_transferRate(NULL), m_deviceIndex(0), m_mtu(1), m_linkUp(false), m_node(NULL), m_channel(NULL), m_dChannelsStatus(0), m_lastPacket(NULL)
 {
 }
 
@@ -155,6 +177,7 @@ bool
 CmtsDevice::Send (Ptr< Packet > packet, const Address &dest, uint16_t protocolNumber)
 {
 	NS_LOG_FUNCTION (this << packet << dest << protocolNumber);
+	m_sendTrace(packet);
 
 	PacketAddress pa;
 	pa.packet = packet;
@@ -181,6 +204,7 @@ void
 CmtsDevice::SetAddress (Address address)
 {
 	NS_LOG_FUNCTION (this << address);
+	m_addressChangeTrace(address);
 
 	m_address = Mac48Address::ConvertFrom (address);
 }
@@ -238,6 +262,7 @@ void
 CmtsDevice::Attach(Ptr<Hfc> channel)
 {
 	NS_LOG_FUNCTION (this << channel);
+	m_attachTrace(channel);
 
 	if (!m_channel)
 	{
@@ -257,6 +282,7 @@ void
 CmtsDevice::Deattach()
 {
 	NS_LOG_FUNCTION (this);
+	m_deattachTrace(m_channel);
 
 	if (!m_channel)
 		return;
@@ -290,6 +316,7 @@ bool
 CmtsDevice::Receive(Ptr< Packet > packet, Ptr<CmDevice> sender)
 {
 	NS_LOG_FUNCTION (this << packet << sender);
+	m_receiveTrace(packet);
 
 	uint16_t protocol = 0;
 	Address address;
@@ -300,6 +327,7 @@ void
 CmtsDevice::TransmitStart(Ptr< Packet > packet, Ptr<CmDevice> destiny)
 {
 	NS_LOG_FUNCTION (this << packet << destiny);
+	m_transmitStartTrace(packet);
 
 	m_dChannelsStatus[0] = kBusy;
 
@@ -307,12 +335,17 @@ CmtsDevice::TransmitStart(Ptr< Packet > packet, Ptr<CmDevice> destiny)
 
 	Simulator::Schedule(txTime, &CmtsDevice::TransmitComplete, this);
 	m_channel->DownTransmitStart(0, packet, destiny, txTime);
+
+	m_lastPacket = packet;
 }
 
 void
 CmtsDevice::TransmitComplete()
 {
 	NS_LOG_FUNCTION (this);
+	m_transmitCompleteTrace(m_lastPacket);
+
+	m_lastPacket = NULL;
 
 	m_dChannelsStatus[0] = kIdle;
 	if (!m_packetQueue.empty())

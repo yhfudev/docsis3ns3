@@ -94,6 +94,15 @@ private:
 	std::list< PacketAddress > m_packetQueue;
 	std::vector<DocsisChannelStatus> m_dChannelsStatus;
 	std::map< Address, Ptr<CmDevice> > m_connectedDevices;
+	Ptr<Packet> m_lastPacket;
+
+	TracedCallback< Ptr<const Packet> > m_sendTrace;
+	TracedCallback< Ptr<const Packet> > m_transmitStartTrace;
+	TracedCallback< Ptr<const Packet> > m_transmitCompleteTrace;
+	TracedCallback< Ptr<const Packet> > m_receiveTrace;
+	TracedCallback< Ptr<const Hfc> > m_attachTrace;
+	TracedCallback< Ptr<const Hfc> > m_deattachTrace;
+	TracedCallback< Address > m_addressChangeTrace;
 };
 
 }
