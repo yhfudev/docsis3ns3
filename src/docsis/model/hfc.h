@@ -26,6 +26,7 @@
 #include "ns3/channel.h"
 #include "ns3/ptr.h"
 #include "ns3/data-rate.h"
+#include "ns3/event-id.h"
 #include <list>
 
 namespace ns3 {
@@ -35,6 +36,14 @@ class CmDevice;
 class Hfc : public Channel
 {
 public:
+
+	enum ChannelState
+	{
+		kChannelAvailable,
+		kChannelBusy,
+		kChannelStateCount
+	};
+
 	static TypeId GetTypeId (void);
 	Hfc ();
 	virtual ~Hfc ();
@@ -54,9 +63,14 @@ public:
 
 	uint32_t GetUpstreamChannelsAmount();
 	uint32_t GetDownstreamChannelsAmount();
+	void SetUpstreamChannelsAmount(uint32_t amount);
+	void SetDownstreamChannelsAmount(uint32_t amount);
 
-	void UpTransmitStart(int channel, Ptr<Packet> p, Ptr<CmDevice> cm, Time txTime);
-	void DownTransmitStart(int channel, Ptr<Packet> p, Ptr<CmDevice> cm, Time txTime);
+
+	void UpTransmitStart(uint32_t channel, Ptr<Packet> p, Ptr<CmDevice> cm, Time txTime);
+	void UpTransmitEnd(uint32_t channel, Ptr<Packet> p, Ptr<CmDevice> cm);
+	void DownTransmitStart(uint32_t channel, Ptr<Packet> p, Ptr<CmDevice> cm, Time txTime);
+	void DownTransmitEnd(uint32_t channel, Ptr<Packet> p, Ptr<CmDevice> cm);
 
 private:
 	Ptr<CmtsDevice> m_cmts;
@@ -64,6 +78,10 @@ private:
 	uint32_t m_upstreamChannelsAmount;
 	uint32_t m_downstreamChannelsAmount;
 	DataRate m_stubDataRate;
+	ChannelState *m_upstreamChannelState;
+	ChannelState *m_downstreamChannelState;
+	EventId *m_upstreamChannelEvent;
+	EventId *m_downstreamChannelEvent;
 };
 
 }
