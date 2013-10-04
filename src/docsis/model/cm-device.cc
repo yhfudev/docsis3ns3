@@ -34,12 +34,34 @@ CmDevice::GetTypeId (void)
 	static TypeId tid = TypeId("ns3::CmDevice")
 		.SetParent<NetDevice> ()
 		.AddConstructor<CmDevice> ()
+		.AddTraceSource("MacTx",
+						"Trace source indicating a packet has arrived for transmission by this device",
+						MakeTraceSourceAccessor(&CmDevice::m_sendTrace) )
+		.AddTraceSource("MacRx",
+						"A packet has been received by this device, has been passed up from the physical layer "
+                     	"and is being forwarded up the local protocol stack.  This is a non-promiscuous trace,",
+						MakeTraceSourceAccessor(&CmDevice::m_receiveTrace) )
+		.AddTraceSource("PhyTxBegin",
+						"Trace source indicating a packet has begun transmitting over the channel",
+						MakeTraceSourceAccessor(&CmDevice::m_transmitStartTrace) )
+		.AddTraceSource("PhyTxEnd",
+						"Trace source indicating a packet has been completely transmitted over the channel",
+						MakeTraceSourceAccessor(&CmDevice::m_transmitCompleteTrace) )
+		.AddTraceSource("ChannelConnect",
+						"Trace source indicating a connection to a channel",
+						MakeTraceSourceAccessor(&CmDevice::m_attachTrace) )
+		.AddTraceSource("ChannelDisconnect",
+						"Trace source indicating a disconnection from a channel",
+						MakeTraceSourceAccessor(&CmDevice::m_deattachTrace) )
+		.AddTraceSource("AddressChange",
+						"Trace source indicating an address change",
+						MakeTraceSourceAccessor(&CmDevice::m_addressChangeTrace) )
 		;
 
 	return tid;
 }
 
-CmDevice::CmDevice () : m_channels(0), m_transferRate(NULL), m_deviceIndex(0), m_mtu(1), m_linkUp(false), m_node(NULL), m_channel(NULL), m_uChannelStatus(kDown)
+CmDevice::CmDevice () : m_channels(0), m_transferRate(NULL), m_deviceIndex(0), m_mtu(1), m_linkUp(false), m_node(NULL), m_channel(NULL), m_uChannelStatus(0), m_lastPacket()
 {
 }
 
@@ -156,9 +178,10 @@ bool
 CmDevice::Send (Ptr< Packet > packet, const Address &dest, uint16_t protocolNumber)
 {
 	NS_LOG_FUNCTION (this << packet << dest << protocolNumber);
+	m_sendTrace(packet);
 
 	m_packetQueue.push_back(packet);
-	if (m_uChannelStatus == kIdle)
+	if (m_uChannelStatus[0] == kIdle)
 	{
 		TransmitStart(m_packetQueue.front());
 		m_packetQueue.pop_front();
@@ -178,6 +201,8 @@ void
 CmDevice::SetAddress (Address address)
 {
 	NS_LOG_FUNCTION (this << address);
+	m_addressChangeTrace(address);
+
 	Address old_address = m_address;
 	m_address = Mac48Address::ConvertFrom (address);
 	m_channel->CmChangedAddress(this, old_address);
@@ -233,6 +258,7 @@ void
 CmDevice::Attach(Ptr<Hfc> channel)
 {
 	NS_LOG_FUNCTION (this << channel);
+	m_attachTrace(channel);
 
 	if (!m_channel)
 	{
@@ -241,7 +267,7 @@ CmDevice::Attach(Ptr<Hfc> channel)
 
 	m_channel = channel;
 	m_channel->Attach(this);
-	m_uChannelStatus = kIdle;
+	m_uChannelStatus.resize((int)m_channel->GetUpstreamChannelsAmount());
 	m_linkUp = true;
 	m_linkChangeCallbacks();
 }
@@ -250,13 +276,14 @@ void
 CmDevice::Deattach()
 {
 	NS_LOG_FUNCTION (this);
+	m_deattachTrace(m_channel);
 
 	if (!m_channel)
 		return;
 
 	m_channel->Deattach(this);
 	m_channel = NULL;
-	m_uChannelStatus = kDown;
+	m_uChannelStatus.resize(0);
 	m_linkUp = false;
 	m_linkChangeCallbacks();
 }
@@ -265,6 +292,7 @@ bool
 CmDevice::Receive(Ptr< Packet > packet)
 {
 	NS_LOG_FUNCTION (this << packet);
+	m_receiveTrace(packet);
 
 	uint16_t protocol = 0;
 	Address address;
@@ -276,21 +304,26 @@ void
 CmDevice::TransmitStart(Ptr< Packet > packet)
 {
 	NS_LOG_FUNCTION (this << packet);
+	m_transmitStartTrace(packet);
 
-	m_uChannelStatus = kBusy;
+	m_uChannelStatus[0] = kBusy;
 
 	Time txTime = Seconds (m_channel->GetUpstreamDataRate(0).CalculateTxTime(packet->GetSize()));
 
 	Simulator::Schedule(txTime, &CmDevice::TransmitComplete, this);
 	m_channel->UpTransmitStart(0, packet, this, txTime);
+
+	m_lastPacket = packet;
 }
 
 void
 CmDevice::TransmitComplete()
 {
 	NS_LOG_FUNCTION (this);
+	m_transmitCompleteTrace(m_lastPacket);
+	m_lastPacket = NULL;
 
-	m_uChannelStatus = kIdle;
+	m_uChannelStatus[0] = kIdle;
 	if (!m_packetQueue.empty())
 	{
 		TransmitStart(m_packetQueue.front());
