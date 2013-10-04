@@ -20,6 +20,7 @@
 #ifndef CM_DEVICE_H
 #define CM_DEVICE_H
 
+#include <vector>
 #include <list>
 #include "docsis-enums.h"
 #include "ns3/packet.h"
@@ -83,7 +84,16 @@ private:
 	ReceiveCallback m_rxCallback;
 	TracedCallback<> m_linkChangeCallbacks;
 	std::list< Ptr<Packet> > m_packetQueue;
-	DocsisChannelStatus m_uChannelStatus;
+	std::vector<DocsisChannelStatus> m_uChannelStatus;
+	Ptr<Packet> m_lastPacket;
+
+	TracedCallback< Ptr<const Packet> > m_sendTrace;
+	TracedCallback< Ptr<const Packet> > m_transmitStartTrace;
+	TracedCallback< Ptr<const Packet> > m_transmitCompleteTrace;
+	TracedCallback< Ptr<const Packet> > m_receiveTrace;
+	TracedCallback< Ptr<const Hfc> > m_attachTrace;
+	TracedCallback< Ptr<const Hfc> > m_deattachTrace;
+	TracedCallback< Address > m_addressChangeTrace;
 };
 
 }
