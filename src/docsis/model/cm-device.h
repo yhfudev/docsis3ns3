@@ -28,6 +28,7 @@
 #include "ns3/node.h"
 #include "ns3/mac48-address.h"
 #include "ns3/traced-callback.h"
+#include "ns3/nstime.h"
 
 namespace ns3 {
 
@@ -40,6 +41,34 @@ public:
 	CmDevice ();
 	~CmDevice ();
 	
+	enum CmUpstreamState {
+		kIdle,
+		kDecision,
+		kToSendRequest,
+		kReqSend,
+		kWaitForMap,
+		kToSend,
+		kContention,
+		CmUpstreamStateCount
+	};
+	enum CmEvent {
+		kNone,
+		kNewPacket,
+		kNewMap,
+		kWaitToSend,
+		kReadyToSend,
+		EventCount
+	};
+	struct ServiceStruct{
+		uint32_t serviceId;
+		uint32_t channel;
+		DocsisUpstreamChannelMode mode;
+		CmUpstreamState state;
+		CmEvent currEvent;
+		std::list<Time> availableSlots;
+		std::list<Packet> packetQueue;
+	};
+
 	void AddLinkChangeCallback (Callback<void> callback);
 	Address GetAddress (void) const;
 	Address GetBroadcast (void) const;
@@ -68,11 +97,27 @@ public:
 	void Attach(Ptr<Hfc> channel);
 	void Deattach();
 
-	bool Receive(Ptr< Packet > packet);
-	void TransmitStart(Ptr< Packet > packet);
-	void TransmitComplete();
+	void Receive(Ptr< Packet > packet, uint32_t channel);
 
 private:
+	void TransmitStart(Ptr< Packet > packet, uint32_t channel);
+	void TransmitComplete(uint32_t channel);
+	void ProcessPacket(Ptr< Packet > packet, uint32_t channel);
+	void ProcessMAP(Ptr< Packet > packet, uint32_t channel);
+	void ProcessData(Ptr< Packet > packet, uint32_t channel);
+
+	void ChangeState(std::list<ServiceStruct>::iterator service, CmEvent newEvent);
+	void ProcessState(std::list<ServiceStruct>::iterator service);
+	void ProcessIdle(std::list<ServiceStruct>::iterator service);
+	void ProcessDecision(std::list<ServiceStruct>::iterator service);
+	void ProcessToSendRequest(std::list<ServiceStruct>::iterator service);
+	void ProcessRequestSend(std::list<ServiceStruct>::iterator service);
+	void ProcessWaitForMap(std::list<ServiceStruct>::iterator service);
+	void ProcessToSend(std::list<ServiceStruct>::iterator service);
+	void ProcessContention(std::list<ServiceStruct>::iterator service);
+
+
+
 	uint32_t m_channels;
 	uint32_t* m_transferRate;
 	uint32_t m_deviceIndex;
@@ -85,6 +130,7 @@ private:
 	TracedCallback<> m_linkChangeCallbacks;
 	std::list< Ptr<Packet> > m_packetQueue;
 	std::vector<DocsisChannelStatus> m_uChannelStatus;
+	std::list<ServiceStruct> m_services;
 	Ptr<Packet> m_lastPacket;
 
 	TracedCallback< Ptr<const Packet> > m_sendTrace;

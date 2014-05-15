@@ -45,6 +45,12 @@ public:
 	CmtsDevice ();
 	~CmtsDevice ();
 
+	struct ServiceStruct{
+		uint32_t serviceId;
+		uint32_t channel;
+		DocsisUpstreamChannelMode mode;
+	};
+
 	void AddLinkChangeCallback (Callback<void> callback);
 	Address GetAddress (void) const;
 	Address GetBroadcast (void) const;
@@ -77,10 +83,11 @@ public:
 	void CmChangedAddress(Ptr<CmDevice> cm, Address old_address);
 
 	bool Receive(Ptr<Packet> packet, Ptr<CmDevice> sender);
+
+private:
 	void TransmitStart(Ptr< Packet > packet, Ptr<CmDevice> destiny);
 	void TransmitComplete();
 
-private:
 	uint32_t m_channels;
 	uint32_t* m_transferRate;
 	uint32_t m_deviceIndex;

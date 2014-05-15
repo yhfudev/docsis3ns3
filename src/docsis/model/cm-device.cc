@@ -22,7 +22,6 @@
 #include "cm-device.h"
 #include "hfc.h"
 #include "ns3/simulator.h"
-#include "ns3/nstime.h"
 
 NS_LOG_COMPONENT_DEFINE ("CmNetDevice");
 
@@ -181,11 +180,6 @@ CmDevice::Send (Ptr< Packet > packet, const Address &dest, uint16_t protocolNumb
 	m_sendTrace(packet);
 
 	m_packetQueue.push_back(packet);
-	if (m_uChannelStatus[0] == kIdle)
-	{
-		TransmitStart(m_packetQueue.front());
-		m_packetQueue.pop_front();
-	}
 	return true;
 }
 
@@ -288,47 +282,62 @@ CmDevice::Deattach()
 	m_linkChangeCallbacks();
 }
 
-bool
-CmDevice::Receive(Ptr< Packet > packet)
+void
+CmDevice::Receive(Ptr< Packet > packet, uint32_t channel)
 {
 	NS_LOG_FUNCTION (this << packet);
 	m_receiveTrace(packet);
 
-	uint16_t protocol = 0;
-	Address address;
-
-	return m_rxCallback(this, packet, protocol, address);
+	ProcessPacket(packet, channel);
 }
 
 void
-CmDevice::TransmitStart(Ptr< Packet > packet)
+CmDevice::TransmitStart(Ptr< Packet > packet, uint32_t channel)
 {
 	NS_LOG_FUNCTION (this << packet);
 	m_transmitStartTrace(packet);
 
-	m_uChannelStatus[0] = kBusy;
-
-	Time txTime = Seconds (m_channel->GetUpstreamDataRate(0).CalculateTxTime(packet->GetSize()));
+	Time txTime = Seconds (m_channel->GetUpstreamDataRate(channel).CalculateTxTime(packet->GetSize()));
 
 	Simulator::Schedule(txTime, &CmDevice::TransmitComplete, this);
-	m_channel->UpTransmitStart(0, packet, this, txTime);
+	m_channel->UpTransmitStart(channel, packet, this, txTime);
 
 	m_lastPacket = packet;
 }
 
 void
-CmDevice::TransmitComplete()
+CmDevice::TransmitComplete(uint32_t channel)
 {
 	NS_LOG_FUNCTION (this);
 	m_transmitCompleteTrace(m_lastPacket);
 	m_lastPacket = NULL;
 
-	m_uChannelStatus[0] = kIdle;
 	if (!m_packetQueue.empty())
 	{
-		TransmitStart(m_packetQueue.front());
+		TransmitStart(m_packetQueue.front(), channel);
 		m_packetQueue.pop_front();
 	}
+}
+
+void
+CmDevice::ProcessPacket(Ptr< Packet > packet, uint32_t channel)
+{
+
+}
+
+void
+CmDevice::ProcessMAP(Ptr< Packet > packet, uint32_t channel)
+{
+
+}
+
+void
+CmDevice::ProcessData(Ptr< Packet > packet, uint32_t channel)
+{
+	uint16_t protocol = 0;
+	Address address;
+
+	m_rxCallback(this, packet, protocol, address);
 }
 
 }

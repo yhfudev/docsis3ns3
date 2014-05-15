@@ -203,7 +203,7 @@ void
 Hfc::DownTransmitEnd(uint32_t channel, Ptr<Packet> p, Ptr<CmDevice> cm)
 {
 	m_downstreamChannelState[channel] = kChannelAvailable;
-	Simulator::ScheduleWithContext(cm->GetNode()->GetId(), Now(), &CmDevice::Receive, cm, p);
+	Simulator::ScheduleWithContext(cm->GetNode()->GetId(), Now(), &CmDevice::Receive, cm, p, channel);
 }
 
 }
