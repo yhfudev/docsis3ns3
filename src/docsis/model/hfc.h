@@ -41,7 +41,7 @@ public:
 	{
 		kChannelAvailable,
 		kChannelBusy,
-		kChannelStateCount
+		ChannelStateCount
 	};
 
 	static TypeId GetTypeId (void);

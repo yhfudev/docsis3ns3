@@ -28,8 +28,18 @@ enum DocsisChannelStatus
 {
 	kIdle,
 	kBusy,
-	kDown,
+	DocsisChannelStatusCount
 };
+
+enum DocsisUpstreamChannelMode
+{
+	kUnsolicitedGrant,
+	kRealTimePolling,
+	kBestEffort,
+	DocsisUpstreamChannelModeCount
+};
+
+
 
 }
 
