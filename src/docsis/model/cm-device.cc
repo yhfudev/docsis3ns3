@@ -336,6 +336,8 @@ CmDevice::ProcessData(Ptr< Packet > packet, uint32_t channel)
 {
 	uint16_t protocol = 0;
 	Address address;
+	
+	
 
 	m_rxCallback(this, packet, protocol, address);
 }

@@ -17,35 +17,42 @@
  *
  * Author: Martín Javier Di Liscia
  */
+#include "docsis.h"
 
-#ifndef DOCSIS_ENUMS_H_
-#define DOCSIS_ENUMS_H_
-
-namespace ns3
-{
-
-enum DocsisChannelStatus
-{
-	kIdle,
-	kBusy,
-	DocsisChannelStatusCount
-};
-
-enum DocsisUpstreamChannelMode
-{
-	kUnsolicitedGrant,
-	kRealTimePolling,
-	kBestEffort,
-	DocsisUpstreamChannelModeCount
-};
-
-enum DocsisChannelDirection
-{
-	kUpstream,
-	kDownstream,
-	ChannelDirectionCount
-};
-
+namespace ns3 {
+	
+	uint32_t DocsisHeader::Deserialize (Buffer::Iterator start)
+	{
+		
+	}
+	
+	uint32_t DocsisHeader::GetSerializedSize (void) const
+	{
+		
+	}
+	
+	void DocsisHeader::Print (std::ostream &os) const
+	{
+		
+	}
+	
+	void DocsisHeader::Serialize (Buffer::Iterator start) const
+	{
+		
+	}
+	
+	TypeId DocsisHeader::GetTypeId (void)
+	{
+		static TypeId tid = TypeId ("ns3::EthernetHeader")
+			.SetParent<Header> ()
+			.AddConctructor<EthernetHeader> ();
+		
+		return tid;
+	}
+	
+	TypeId DocsisHeader::GetInstanceTypeId (void) const
+	{
+		return GetTypeId();
+	}
+	
 }
-
-#endif /* DOCSIS_ENUMS_H_ */
