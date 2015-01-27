@@ -18,17 +18,58 @@
  * Author: Martín Javier Di Liscia
  */
 #include "docsis.h"
+#include "docsis-header.h"
 
 namespace ns3 {
 	
 	uint32_t DocsisHeader::Deserialize (Buffer::Iterator start)
 	{
-		
+		return 0;
 	}
 	
 	uint32_t DocsisHeader::GetSerializedSize (void) const
 	{
+		uint32_t size=0;
 		
+		switch(m_fcType) {
+			case kPacketPDU:
+			case kIsolationPacketPDU:
+				size = 6+m_headerLength+m_extendedHeaderLength;
+				break;
+				
+			case kMacSpecific:
+				switch(m_macType) {
+					case kTiming:
+						size = 6+m_headerLength;
+						break;
+					
+					case kMacManagement:
+						size = 6+m_headerLength+m_extendedHeaderLength;
+						break;
+						
+					case kRequest:
+						size = 6;
+						break;
+					
+					case kFragmentation:
+						size = 6+m_headerLength;
+						break;
+					
+					case kQdbRequest:
+						size = 7;
+						break;
+					
+					case kConcatenation:
+						size = 6+m_headerLength;
+						break;
+				}
+				break;
+			
+			default:
+				size = 0;
+		}
+		
+		return size;
 	}
 	
 	void DocsisHeader::Print (std::ostream &os) const
@@ -45,7 +86,7 @@ namespace ns3 {
 	{
 		static TypeId tid = TypeId ("ns3::DocsisHeader")
 			.SetParent<Header> ()
-			.AddConctructor<DocsisHeader> ();
+			.AddConstructor<DocsisHeader> ();
 		
 		return tid;
 	}
@@ -109,7 +150,7 @@ namespace ns3 {
 		m_headerLength = sid;
 	}
 	
-	void DocsisHeader::setupMSHFragmentation(size_t overheadSize, uint16_t sid, size_t partialPduLength, ExtendedHeader eh, DocsisChannelDirection direction) {
+	void DocsisHeader::setupMSHFragmentation(size_t overheadSize, size_t partialPduLength, ExtendedHeader eh, DocsisChannelDirection direction) {
 		m_phyOverhead = overheadSize;
 		m_packetDirection = direction;
 		
@@ -117,7 +158,7 @@ namespace ns3 {
 		m_macType = kFragmentation;
 		m_extendedHeaderPresent = false;
 		m_extendedHeaderLength = 0;
-		m_headerLength = pduLength;
+		m_headerLength = partialPduLength;
 		
 		addExtendedHeader(eh);
 	}
@@ -142,11 +183,10 @@ namespace ns3 {
 		m_macType = kConcatenation;
 		m_extendedHeaderPresent = false;
 		m_extendedHeaderLength = 0;
-		m_requestedSlots = bytesMultiples;
 		m_concatenatedHeaders = headers;
 		
 		m_headerLength = 0;
-		for (std::list::Iterator iter = headers.begin(); iter != headers.end(); iter++)
+		for (std::list<DocsisHeader>::iterator iter = headers.begin(); iter != headers.end(); iter++)
 			m_headerLength += iter->GetSerializedSize();
 	}
 	
