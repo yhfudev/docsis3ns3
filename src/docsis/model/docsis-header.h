@@ -48,11 +48,20 @@ namespace ns3 {
 			kDownstreamPrivacy,
 			kDownstreamServiceFlow,
 			kUpstreamServiceFlow,
+			kUpstreamPrivacy2,
+			kDownstreamService,
+			kDocsisPathVerify,
+			kReserved10,
+			kReserved11,
+			kReserved12,
+			kReserved13,
+			kReserved14,
+			kExtended,
 			ExtendedHeaderTypeCount
 		};
 		struct ExtendedHeader {
 			ExtendedHeaderType m_type;
-			uint8_t m_length;
+			uint8_t m_length;	// In bytes
 			uint8_t m_sid;
 			uint8_t m_minislots;
 		};
@@ -65,10 +74,17 @@ namespace ns3 {
 		static TypeId GetTypeId (void);
 		virtual TypeId GetInstanceTypeId (void) const;
 		
-		void setupPduPacket(size_t overheadSize, DocsisChannelDirection direction);
-		void setupAtmPacket(size_t overheadSize, DocsisChannelDirection direction);
-		void setupIsolationPduPacket(size_t overheadSize, DocsisChannelDirection direction,
-									
+		void setupPduPacket(size_t overheadSize, size_t pduLength, DocsisChannelDirection direction);
+		void setupIsolationPduPacket(size_t overheadSize, size_t pduLength, DocsisChannelDirection direction);
+		
+		void setupMSHTiming(size_t overheadSize, size_t pduLength, DocsisChannelDirection direction);
+		void setupMSHManagement(size_t overheadSize, size_t macMsgLength, DocsisChannelDirection direction);
+		void setupMSHRequest(size_t overheadSize, uint16_t sid, uint8_t count, DocsisChannelDirection direction);
+		void setupMSHFragmentation(size_t overheadSize, size_t partialPduLength, ExtendedHeader eh, DocsisChannelDirection direction);
+		void setupMSHRequestQD(size_t overheadSize, uint16_t sid, uint16_t bytesMultiples, DocsisChannelDirection direction);
+		void setupMSHConcatenation(size_t overheadSize, DocsisChannelDirection direction);
+		
+		void addExtendedHeader(ExtendedHeader eh);
 		
 	private:
 		DocsisChannelDirection m_packetDirection;
@@ -81,7 +97,8 @@ namespace ns3 {
 		uint8_t m_requestedSlots;
 		uint16_t m_qdbRequestedSlots;
 		uint16_t m_headerLength;
-		ExtendedHeader m_extendedHeader;
+		std::list<ExtendedHeader> m_extendedHeader;
+		std::list<DocsisHeader> m_concatenatedHeaders;
 	};
 }
 

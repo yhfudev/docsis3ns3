@@ -13,6 +13,7 @@ def build(bld):
         'model/hfc.cc',
         'model/cm-device.cc',
         'model/cmts-device.cc',
+        'model/docsis-header.cc',
         'helper/docsis-helper.cc',
         ]
 
@@ -29,6 +30,7 @@ def build(bld):
         'model/cm-device.h',
         'model/cmts-device.h',
         'model/docsis-enums.h',
+        'model/docsis-header.h',
         'helper/docsis-helper.h',
         ]
 
