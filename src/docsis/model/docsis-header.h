@@ -82,7 +82,7 @@ namespace ns3 {
 		void setupMSHRequest(size_t overheadSize, uint16_t sid, uint8_t count, DocsisChannelDirection direction);
 		void setupMSHFragmentation(size_t overheadSize, size_t partialPduLength, ExtendedHeader eh, DocsisChannelDirection direction);
 		void setupMSHRequestQD(size_t overheadSize, uint16_t sid, uint16_t bytesMultiples, DocsisChannelDirection direction);
-		void setupMSHConcatenation(size_t overheadSize, DocsisChannelDirection direction);
+		void setupMSHConcatenation(size_t overheadSize, std::list<DocsisHeader> headers, DocsisChannelDirection direction);
 		
 		void addExtendedHeader(ExtendedHeader eh);
 		
