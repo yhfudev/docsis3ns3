@@ -299,7 +299,7 @@ CmDevice::TransmitStart(Ptr< Packet > packet, uint32_t channel)
 
 	Time txTime = Seconds (m_channel->GetUpstreamDataRate(channel).CalculateTxTime(packet->GetSize()));
 
-	Simulator::Schedule(txTime, &CmDevice::TransmitComplete, this);
+	Simulator::Schedule(txTime, &CmDevice::TransmitComplete, this, channel);
 	m_channel->UpTransmitStart(channel, packet, this, txTime);
 
 	m_lastPacket = packet;
@@ -338,7 +338,6 @@ CmDevice::ProcessData(Ptr< Packet > packet, uint32_t channel)
 	Address address;
 	
 	
-
 	m_rxCallback(this, packet, protocol, address);
 }
 
