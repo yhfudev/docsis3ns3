@@ -59,11 +59,24 @@ namespace ns3 {
 			kExtended,
 			ExtendedHeaderTypeCount
 		};
+		
 		struct ExtendedHeader {
-			ExtendedHeaderType m_type;
-			uint8_t m_length;	// In bytes
-			uint8_t m_sid;
-			uint8_t m_minislots;
+			struct ExtendedHeaderElement {
+				ExtendedHeaderType m_type;
+				uint8_t m_length;	// In bytes
+				uint32_t m_sid;
+				uint8_t m_minislots;
+				bool m_queueIndicator;
+				uint8_t m_activeGrants;
+				uint8_t m_traficPriority;
+				bool m_sequenceChangeCount;
+				uint16_t m_packetSequenceNumber;
+			};
+			std::list<ExtendedHeaderElement> elements;
+			
+			void Serialize (Buffer::Iterator start) const;
+			uint32_t Deserialize (uint8_t ehLength, Buffer::Iterator start);
+			uint32_t GetSerializedSize (void) const;
 		};
 		
 		virtual uint32_t Deserialize (Buffer::Iterator start);
@@ -80,11 +93,11 @@ namespace ns3 {
 		void setupMSHTiming(size_t overheadSize, size_t pduLength, DocsisChannelDirection direction);
 		void setupMSHManagement(size_t overheadSize, size_t macMsgLength, DocsisChannelDirection direction);
 		void setupMSHRequest(size_t overheadSize, uint16_t sid, uint8_t count, DocsisChannelDirection direction);
-		void setupMSHFragmentation(size_t overheadSize, size_t partialPduLength, ExtendedHeader eh, DocsisChannelDirection direction);
+		void setupMSHFragmentation(size_t overheadSize, size_t partialPduLength, ExtendedHeader::ExtendedHeaderElement ehe, DocsisChannelDirection direction);
 		void setupMSHRequestQD(size_t overheadSize, uint16_t sid, uint16_t bytesMultiples, DocsisChannelDirection direction);
-		void setupMSHConcatenation(size_t overheadSize, std::list<DocsisHeader> headers, DocsisChannelDirection direction);
+		void setupMSHConcatenation(size_t overheadSize, uint8_t packets, uint16_t packetsSize, DocsisChannelDirection direction);
 		
-		void addExtendedHeader(ExtendedHeader eh);
+		void addExtendedHeader(ExtendedHeader::ExtendedHeaderElement ehe);
 		
 	private:
 		DocsisChannelDirection m_packetDirection;
@@ -97,8 +110,8 @@ namespace ns3 {
 		uint8_t m_requestedSlots;
 		uint16_t m_qdbRequestedSlots;
 		uint16_t m_headerLength;
-		std::list<ExtendedHeader> m_extendedHeader;
-		std::list<DocsisHeader> m_concatenatedHeaders;
+		ExtendedHeader m_extendedHeader;
+		uint8_t m_concatenatedPackets;
 	};
 }
 
