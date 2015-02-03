@@ -322,7 +322,7 @@ CmDevice::TransmitComplete(uint32_t channel)
 void
 CmDevice::ProcessPacket(Ptr< Packet > packet, uint32_t channel)
 {
-
+	
 }
 
 void
