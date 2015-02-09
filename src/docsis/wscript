@@ -14,6 +14,7 @@ def build(bld):
         'model/cm-device.cc',
         'model/cmts-device.cc',
         'model/docsis-header.cc',
+        'model/mac-management-header.cc',
         'helper/docsis-helper.cc',
         ]
 
@@ -31,6 +32,7 @@ def build(bld):
         'model/cmts-device.h',
         'model/docsis-enums.h',
         'model/docsis-header.h',
+        'model/mac-management-header.h',
         'helper/docsis-helper.h',
         ]
 
