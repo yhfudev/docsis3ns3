@@ -25,6 +25,7 @@ NS_LOG_COMPONENT_DEFINE ("MacManagementMessageHeader");
 
 namespace ns3 {
 	
+	// ************* MacManagementMessageHeader ***********************
 	uint32_t MacManagementMessageHeader::Deserialize (Buffer::Iterator start) {
 		m_destinationAddress = start.ReadU32();
 		m_destinationAddress += ((uint64_t)start.ReadU16()) << 32;
@@ -37,6 +38,8 @@ namespace ns3 {
 		m_version = start.ReadU8();
 		m_type = (MmmType)start.ReadU8();
 		start.ReadU8();
+		
+		return 18;
 	}
 	
 	uint32_t MacManagementMessageHeader::GetSerializedSize (void) const {
@@ -70,7 +73,79 @@ namespace ns3 {
 		return tid;
 	}
 	
-	TypeId DocsisHeader::GetInstanceTypeId (void) const
+	TypeId MacManagementMessageHeader::GetInstanceTypeId (void) const
+	{
+		return GetTypeId();
+	}
+	
+	// ************* MAPHeader ****************************************
+	uint32_t MAPHeader::Deserialize (Buffer::Iterator start) {
+		m_ucId = start.ReadU8();
+		m_ucdCount = start.ReadU8();
+		m_elementCount = start.ReadU8();
+		start.ReadU8();
+		
+		m_startTime = start.ReadU32();
+		m_ackTime = start.ReadU32();
+		
+		m_rangingStart = start.ReadU8();
+		m_rangingEnd = start.ReadU8();
+		m_dataStart = start.ReadU8();
+		m_dataEnd = start.ReadU8();
+		
+		m_ies.clear();
+		for(uint8_t i=0; i < m_elementCount; i++) {
+			InformationElement ie;
+			ie.m_sid = start.ReadU16();
+			ie.m_offset = start.ReadU16();
+			
+			ie.m_type = (IEType)( ((ie.m_sid & 0x3)<<2) + (ie.m_offset>>14) );
+			ie.m_sid = ie.m_sid>>2;
+			ie.m_offset &= 0x3FFF;
+			
+			m_ies.push_back(ie);
+		}
+		
+		return 16 + m_elementCount*4;
+	}
+	
+	uint32_t MAPHeader::GetSerializedSize (void) const {
+		return 16 + m_ies.size()*4;
+	}
+	
+	void MAPHeader::Print (std::ostream &os) const {
+		
+	}
+	
+	void MAPHeader::Serialize (Buffer::Iterator start) const {
+		start.WriteU8(m_ucId);
+		start.WriteU8(m_ucdCount);
+		start.WriteU8(m_elementCount);
+		start.WriteU8(0);
+		
+		start.WriteU32(m_startTime);
+		start.WriteU32(m_ackTime);
+		
+		start.WriteU8(m_rangingStart);
+		start.WriteU8(m_rangingEnd);
+		start.WriteU8(m_dataStart);
+		start.WriteU8(m_dataEnd);
+		
+		for(std::list<InformationElement>::const_iterator ie=m_ies.begin(); ie != m_ies.end(); ie++) {
+			start.WriteU16( (ie->m_sid<<2) + ((uint8_t)(ie->m_type)>>2) );
+			start.WriteU16( ie->m_offset + ( ((uint8_t)(ie->m_type)&0x03) << 14) );
+		}
+	}
+	
+	TypeId MAPHeader::GetTypeId (void) {
+		static TypeId tid = TypeId ("ns3::MAPHeader")
+			.SetParent<Header> ()
+			.AddConstructor<MAPHeader> ();
+		
+		return tid;
+	}
+	
+	TypeId MAPHeader::GetInstanceTypeId (void) const
 	{
 		return GetTypeId();
 	}
