@@ -20,6 +20,7 @@
 #ifndef DOCSIS_HEADER_H
 #define DOCSIS_HEADER_H
 
+#include "docsis.h"
 #include "docsis-enums.h"
 
 namespace ns3 {
