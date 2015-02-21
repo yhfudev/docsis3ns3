@@ -32,115 +32,116 @@
 
 namespace ns3 {
 
-class Hfc;
+  class Hfc;
 
-class CmDevice : public NetDevice
-{
-public:
-	static TypeId GetTypeId (void);
-	CmDevice ();
-	~CmDevice ();
-	
-	enum CmUpstreamState {
-		kIdle,
-		kDecision,
-		kToSendRequest,
-		kReqSend,
-		kWaitForMap,
-		kToSend,
-		kContention,
-		CmUpstreamStateCount
-	};
-	enum CmEvent {
-		kNone,
-		kNewPacket,
-		kNewMap,
-		kWaitToSend,
-		kReadyToSend,
-		EventCount
-	};
-	struct ServiceStruct{
-		uint32_t serviceId;
-		uint32_t channel;
-		DocsisUpstreamChannelMode mode;
-		CmUpstreamState state;
-		CmEvent currEvent;
-		std::list<Time> availableSlots;
-		std::list<Packet> packetQueue;
-	};
+  class CmDevice : public NetDevice
+  {
+  public:
+    static TypeId GetTypeId (void);
+    CmDevice ();
+    ~CmDevice ();
 
-	void AddLinkChangeCallback (Callback<void> callback);
-	Address GetAddress (void) const;
-	Address GetBroadcast (void) const;
-	Ptr< Channel > 	GetChannel (void) const;
-	uint32_t GetIfIndex (void) const;
-	uint16_t GetMtu (void) const;
-	Address GetMulticast (Ipv4Address multicastGroup) const;
-	Address GetMulticast (Ipv6Address addr) const;
-	Ptr< Node > GetNode (void) const;
-	bool IsBridge (void) const;
-	bool IsBroadcast (void) const;
-	bool IsLinkUp (void) const;
-	bool IsMulticast (void) const;
-	bool IsPointToPoint (void) const;
-	bool NeedsArp (void) const;
-	bool Send (Ptr< Packet > packet, const Address &dest, uint16_t protocolNumber);
-	bool SendFrom (Ptr< Packet > packet, const Address &source, const Address &dest, uint16_t protocolNumber);
-	void SetAddress (Address address);
-	void SetIfIndex (const uint32_t index);
-	bool SetMtu (const uint16_t mtu);
-	void SetNode (Ptr< Node > node);
-	void SetPromiscReceiveCallback (PromiscReceiveCallback cb);
-	void SetReceiveCallback (ReceiveCallback cb);
-	bool SupportsSendFrom (void) const;
-	
-	void Attach(Ptr<Hfc> channel);
-	void Deattach();
+    enum CmUpstreamState {
+      kIdle,
+      kDecision,
+      kToSendRequest,
+      kReqSend,
+      kWaitForMap,
+      kToSend,
+      kContention,
+      CmUpstreamStateCount
+    };
+    enum CmEvent {
+      kNone,
+      kNewPacket,
+      kNewMap,
+      kWaitToSend,
+      kReadyToSend,
+      EventCount
+    };
+    struct ServiceStruct{
+      uint32_t serviceId;
+      uint32_t channel;
+      DocsisUpstreamChannelMode mode;
+      CmUpstreamState state;
+      CmEvent currEvent;
+      std::list<Time> availableSlots;
+      std::list<Packet> packetQueue;
+    };
 
-	void Receive(Ptr< Packet > packet, uint32_t channel);
+    void AddLinkChangeCallback (Callback<void> callback);
+    Address GetAddress (void) const;
+    Address GetBroadcast (void) const;
+    Ptr< Channel > 	GetChannel (void) const;
+    uint32_t GetIfIndex (void) const;
+    uint16_t GetMtu (void) const;
+    Address GetMulticast (Ipv4Address multicastGroup) const;
+    Address GetMulticast (Ipv6Address addr) const;
+    Ptr< Node > GetNode (void) const;
+    bool IsBridge (void) const;
+    bool IsBroadcast (void) const;
+    bool IsLinkUp (void) const;
+    bool IsMulticast (void) const;
+    bool IsPointToPoint (void) const;
+    bool NeedsArp (void) const;
+    bool Send (Ptr< Packet > packet, const Address &dest, uint16_t protocolNumber);
+    bool SendFrom (Ptr< Packet > packet, const Address &source, const Address &dest, uint16_t protocolNumber);
+    void SetAddress (Address address);
+    void SetIfIndex (const uint32_t index);
+    bool SetMtu (const uint16_t mtu);
+    void SetNode (Ptr< Node > node);
+    void SetPromiscReceiveCallback (PromiscReceiveCallback cb);
+    void SetReceiveCallback (ReceiveCallback cb);
+    bool SupportsSendFrom (void) const;
 
-private:
-	void TransmitStart(Ptr< Packet > packet, uint32_t channel);
-	void TransmitComplete(uint32_t channel);
-	void ProcessPacket(Ptr< Packet > packet, uint32_t channel);
-	void ProcessMAP(Ptr< Packet > packet, uint32_t channel);
-	void ProcessData(Ptr< Packet > packet, uint32_t channel);
+    void Attach(Ptr<Hfc> channel);
+    void Deattach();
 
-	void ChangeState(std::list<ServiceStruct>::iterator service, CmEvent newEvent);
-	void ProcessState(std::list<ServiceStruct>::iterator service);
-	void ProcessIdle(std::list<ServiceStruct>::iterator service);
-	void ProcessDecision(std::list<ServiceStruct>::iterator service);
-	void ProcessToSendRequest(std::list<ServiceStruct>::iterator service);
-	void ProcessRequestSend(std::list<ServiceStruct>::iterator service);
-	void ProcessWaitForMap(std::list<ServiceStruct>::iterator service);
-	void ProcessToSend(std::list<ServiceStruct>::iterator service);
-	void ProcessContention(std::list<ServiceStruct>::iterator service);
+    void Receive(Ptr< Packet > packet, uint32_t channel);
+
+  private:
+    void TransmitStart(Ptr< Packet > packet, uint32_t channel);
+    void TransmitComplete(uint32_t channel);
+    void ProcessPacket(Ptr< Packet > packet, uint32_t channel);
+    void ProcessManagement(Ptr< Packet > packet, uint32_t channel);
+    void ProcessMAP(Ptr< Packet > packet, uint32_t channel);
+    void ProcessData(Ptr< Packet > packet, uint32_t channel);
+
+    void ChangeState(std::list<ServiceStruct>::iterator service, CmEvent newEvent);
+    void ProcessState(std::list<ServiceStruct>::iterator service);
+    void ProcessIdle(std::list<ServiceStruct>::iterator service);
+    void ProcessDecision(std::list<ServiceStruct>::iterator service);
+    void ProcessToSendRequest(std::list<ServiceStruct>::iterator service);
+    void ProcessRequestSend(std::list<ServiceStruct>::iterator service);
+    void ProcessWaitForMap(std::list<ServiceStruct>::iterator service);
+    void ProcessToSend(std::list<ServiceStruct>::iterator service);
+    void ProcessContention(std::list<ServiceStruct>::iterator service);
 
 
 
-	uint32_t m_channels;
-	uint32_t* m_transferRate;
-	uint32_t m_deviceIndex;
-	uint32_t m_mtu;
-	bool m_linkUp;
-	Ptr<Node> m_node;
-	Mac48Address m_address;
-	Ptr<Hfc> m_channel;
-	ReceiveCallback m_rxCallback;
-	TracedCallback<> m_linkChangeCallbacks;
-	std::list< Ptr<Packet> > m_packetQueue;
-	std::vector<DocsisChannelStatus> m_uChannelStatus;
-	std::list<ServiceStruct> m_services;
-	Ptr<Packet> m_lastPacket;
+    uint32_t m_channels;
+    uint32_t* m_transferRate;
+    uint32_t m_deviceIndex;
+    uint32_t m_mtu;
+    bool m_linkUp;
+    Ptr<Node> m_node;
+    Mac48Address m_address;
+    Ptr<Hfc> m_channel;
+    ReceiveCallback m_rxCallback;
+    TracedCallback<> m_linkChangeCallbacks;
+    std::list< Ptr<Packet> > m_packetQueue;
+    std::vector<DocsisChannelStatus> m_uChannelStatus;
+    std::list<ServiceStruct> m_services;
+    Ptr<Packet> m_lastPacket;
 
-	TracedCallback< Ptr<const Packet> > m_sendTrace;
-	TracedCallback< Ptr<const Packet> > m_transmitStartTrace;
-	TracedCallback< Ptr<const Packet> > m_transmitCompleteTrace;
-	TracedCallback< Ptr<const Packet> > m_receiveTrace;
-	TracedCallback< Ptr<const Hfc> > m_attachTrace;
-	TracedCallback< Ptr<const Hfc> > m_deattachTrace;
-	TracedCallback< Address > m_addressChangeTrace;
-};
+    TracedCallback< Ptr<const Packet> > m_sendTrace;
+    TracedCallback< Ptr<const Packet> > m_transmitStartTrace;
+    TracedCallback< Ptr<const Packet> > m_transmitCompleteTrace;
+    TracedCallback< Ptr<const Packet> > m_receiveTrace;
+    TracedCallback< Ptr<const Hfc> > m_attachTrace;
+    TracedCallback< Ptr<const Hfc> > m_deattachTrace;
+    TracedCallback< Address > m_addressChangeTrace;
+  };
 
 }
 
