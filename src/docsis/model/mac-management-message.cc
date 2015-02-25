@@ -176,4 +176,21 @@ namespace ns3 {
     return m_ies.end ();
   }
 
+  uint8_t
+  MAPHeader::GetUpstreamChannelId() const
+  {
+    return m_ucId;
+  }
+
+  uint32_t
+  MAPHeader::GetStartTime() const
+  {
+    return m_startTime;
+  }
+
+  uint32_t
+  MAPHeader::GetSlotNumber(InformationElement infoElement) const
+  {
+    return m_startTime + infoElement.m_offset;
+  }
 }

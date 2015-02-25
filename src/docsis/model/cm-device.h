@@ -59,13 +59,20 @@ namespace ns3 {
       kReadyToSend,
       EventCount
     };
+
+    struct Slot {
+      Slot() : startingTime(Seconds(0)), length(0) {}
+      Time startingTime;
+      uint16_t length;
+    };
     struct ServiceStruct{
       uint32_t serviceId;
       uint32_t channel;
+      Time timePerMinislot;
       DocsisUpstreamChannelMode mode;
       CmUpstreamState state;
       CmEvent currEvent;
-      std::list<Time> availableSlots;
+      std::list<Slot> availableSlots;
       std::list<Packet> packetQueue;
     };
 

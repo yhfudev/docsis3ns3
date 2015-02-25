@@ -91,6 +91,9 @@ namespace ns3 {
 
     InfoElementIterator InfoElementBegin() const;
     InfoElementIterator InfoElementEnd() const;
+    uint8_t GetUpstreamChannelId() const;
+    uint32_t GetStartTime() const;
+    uint32_t GetSlotNumber(InformationElement infoElement) const;
 
   private:
     uint8_t m_ucId;

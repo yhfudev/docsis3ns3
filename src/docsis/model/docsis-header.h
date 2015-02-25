@@ -118,6 +118,27 @@ namespace ns3 {
     ExtendedHeader m_extendedHeader;
     uint8_t m_concatenatedPackets;
   };
+
+  class PDUHeader : public Header
+  {
+  public:
+    virtual uint32_t Deserialize (Buffer::Iterator start);
+    virtual uint32_t GetSerializedSize (void) const;
+    virtual void Print (std::ostream &os) const;
+    virtual void Serialize (Buffer::Iterator start) const;
+
+    static TypeId GetTypeId (void);
+    virtual TypeId GetInstanceTypeId (void) const;
+
+    Mac48Address GetSource() const;
+    Mac48Address GetDestination() const;
+    uint16_t GetTypeLength() const;
+
+  private:
+    Mac48Address m_source;
+    Mac48Address m_destination;
+    uint16_t m_type_length;
+  };
 }
 
 #endif /* DOCSIS_HEADER_H */
