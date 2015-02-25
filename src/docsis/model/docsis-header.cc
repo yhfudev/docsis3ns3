@@ -22,7 +22,7 @@
 #include "mac-management-message.h"
 
 namespace ns3 {
-
+  // ************* DocsisHeader *************************************
   uint32_t DocsisHeader::Deserialize (Buffer::Iterator start)
   {
     uint32_t readBytes = 0;
@@ -368,5 +368,82 @@ namespace ns3 {
 
   bool DocsisHeader::IsRequestPacket() const {
     return m_fcType == kMacSpecific && m_macType == kRequest;
+  }
+
+  // ************* PDUHeader ****************************************
+  uint32_t
+  PDUHeader::Deserialize(Buffer::Iterator start)
+  {
+    uint8_t buffer[6];
+
+    start.Read (buffer, 6);
+    m_destination.CopyFrom(buffer);
+
+    start.Read (buffer, 6);
+    m_source.CopyFrom(buffer);
+
+    m_type_length = start.ReadU16 ();
+
+    return 14;
+  }
+
+  uint32_t
+  PDUHeader::GetSerializedSize (void) const
+  {
+    return 14;
+  }
+
+  void
+  PDUHeader::Print (std::ostream &os) const
+  {
+
+  }
+
+  void
+  PDUHeader::Serialize (Buffer::Iterator start) const
+  {
+    uint8_t buffer[6];
+
+    m_destination.CopyTo (buffer);
+    start.Write (buffer, 6);
+
+    m_source.CopyTo (buffer);
+    start.Write (buffer, 6);
+
+    start.WriteU16 (m_type_length);
+  }
+
+  TypeId
+  PDUHeader::GetTypeId (void)
+  {
+    static TypeId tid = TypeId ("ns3::PDUHeader")
+        .SetParent<Header> ()
+        .AddConstructor<PDUHeader> ();
+
+    return tid;
+  }
+
+  TypeId
+  PDUHeader::GetInstanceTypeId (void) const
+  {
+    return GetTypeId();
+  }
+
+  Mac48Address
+  PDUHeader::GetSource() const
+  {
+    return m_source;
+  }
+
+  Mac48Address
+  PDUHeader::GetDestination() const
+  {
+    return m_destination;
+  }
+
+  uint16_t
+  PDUHeader::GetTypeLength() const
+  {
+    return m_type_length;
   }
 }

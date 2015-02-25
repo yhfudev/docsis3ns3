@@ -24,6 +24,7 @@
 #include "ns3/simulator.h"
 #include "docsis-header.h"
 #include "mac-management-message.h"
+#include "ns3/llc-snap-header.h"
 
 NS_LOG_COMPONENT_DEFINE ("CmNetDevice");
 
@@ -356,7 +357,19 @@ namespace ns3 {
       {
         if (ies->m_type == MAPHeader::kShortDataGrant || ies->m_type == MAPHeader::kLargeDataGrant)
           {
-            //TODO: save grant
+            for (std::list<ServiceStruct>::iterator service = m_services.begin (); service != m_services.end (); service++)\
+              {
+                if (service->channel == mh.GetUpstreamChannelId () && service->serviceId == ies->m_sid)
+                  {
+                    Slot slot;
+                    MAPHeader::InfoElementIterator nextInfo = ies; nextInfo++;
+
+                    slot.startingTime = Time(service->timePerMinislot.GetDouble() * mh.GetSlotNumber (*ies));
+                    slot.length = nextInfo->m_offset - ies->m_offset;
+
+                    service->availableSlots.push_back(slot);
+                  }
+              }
           }
       }
   }
@@ -364,11 +377,23 @@ namespace ns3 {
   void
   CmDevice::ProcessData(Ptr< Packet > packet, uint32_t channel)
   {
-    uint16_t protocol = 0;
-    Address address;
+    PDUHeader pduh;
+    packet->RemoveHeader (pduh);
+    packet->RemoveAtEnd (4);
+    if (pduh.GetDestination () != m_address) return;
 
+    uint16_t protocol = pduh.GetTypeLength ();
+    if (protocol <= 1500)
+      {
+        uint32_t padlen = packet->GetSize () - protocol;
+        if (padlen > 0) packet->RemoveAtEnd (padlen);
 
-    m_rxCallback(this, packet, protocol, address);
+        LlcSnapHeader llc;
+        packet->RemoveHeader (llc);
+        protocol = llc.GetType ();
+      }
+
+    m_rxCallback(this, packet, protocol, pduh.GetSource ());
   }
 
 }
