@@ -88,6 +88,9 @@ private:
 	void TransmitStart(Ptr< Packet > packet, Ptr<CmDevice> destiny);
 	void TransmitComplete();
 
+	uint32_t m_downstreamOverhead;
+	bool m_useLLC;
+
 	uint32_t m_channels;
 	uint32_t* m_transferRate;
 	uint32_t m_deviceIndex;

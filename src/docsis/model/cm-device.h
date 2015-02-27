@@ -124,8 +124,6 @@ namespace ns3 {
     void ProcessToSend(std::list<ServiceStruct>::iterator service);
     void ProcessContention(std::list<ServiceStruct>::iterator service);
 
-
-
     uint32_t m_channels;
     uint32_t* m_transferRate;
     uint32_t m_deviceIndex;

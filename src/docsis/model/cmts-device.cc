@@ -20,8 +20,10 @@
 
 #include "ns3/log.h"
 #include "cmts-device.h"
+#include "docsis-header.h"
 #include "hfc.h"
 #include "ns3/simulator.h"
+#include "ns3/llc-snap-header.h"
 
 NS_LOG_COMPONENT_DEFINE ("CmtsNetDevice");
 
@@ -176,27 +178,47 @@ CmtsDevice::NeedsArp (void) const
 bool
 CmtsDevice::Send (Ptr< Packet > packet, const Address &dest, uint16_t protocolNumber)
 {
-	NS_LOG_FUNCTION (this << packet << dest << protocolNumber);
-	m_sendTrace(packet);
-
-	PacketAddress pa;
-	pa.packet = packet;
-	pa.address = dest;
-
-	m_packetQueue.push_back(pa);
-	if (m_dChannelsStatus[0] == kIdle)
-	{
-		TransmitStart(m_packetQueue.front().packet, m_connectedDevices[m_packetQueue.front().address]);
-		m_packetQueue.pop_front();
-	}
-	return true;
+  return SendFrom(packet, m_address, dest, protocolNumber);
 }
 
 
 bool
 CmtsDevice::SendFrom (Ptr< Packet > packet, const Address &source, const Address &dest, uint16_t protocolNumber)
 {
-	return true;
+  NS_LOG_FUNCTION (this << packet << dest << protocolNumber);
+  m_sendTrace(packet);
+
+  // **** Headers section ****
+  uint16_t typeLength = protocolNumber;
+  if (m_useLLC)
+    {
+      LlcSnapHeader llc;
+      llc.SetType (protocolNumber);
+      packet->AddHeader (llc);
+
+      typeLength = packet->GetSize ();
+    }
+
+  PDUHeader pduh;
+  pduh.Setup (m_address, Mac48Address::ConvertFrom (dest), typeLength);
+  packet->AddHeader (pduh);
+
+  DocsisHeader dh;
+  dh.setupPduPacket (m_downstreamOverhead, packet->GetSize (), kDownstream);
+  packet->AddHeader (dh);
+
+  PacketAddress pa;
+  pa.packet = packet;
+  pa.address = dest;
+  // **** Headers section ****
+
+  m_packetQueue.push_back(pa);
+  if (m_dChannelsStatus[0] == kIdle)
+  {
+    TransmitStart(m_packetQueue.front().packet, m_connectedDevices[m_packetQueue.front().address]);
+    m_packetQueue.pop_front();
+  }
+  return true;
 }
 
 
