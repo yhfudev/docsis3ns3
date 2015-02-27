@@ -429,6 +429,15 @@ namespace ns3 {
     return GetTypeId();
   }
 
+  void
+  PDUHeader::Setup(Mac48Address source, Mac48Address destination, uint16_t typeLength)
+  {
+    m_source = source;
+    m_destination = destination;
+    m_type_length = typeLength;
+  }
+
+
   Mac48Address
   PDUHeader::GetSource() const
   {
@@ -446,4 +455,5 @@ namespace ns3 {
   {
     return m_type_length;
   }
+
 }

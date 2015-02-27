@@ -130,6 +130,8 @@ namespace ns3 {
     static TypeId GetTypeId (void);
     virtual TypeId GetInstanceTypeId (void) const;
 
+    void Setup(Mac48Address source, Mac48Address destination, uint16_t typeLength);
+
     Mac48Address GetSource() const;
     Mac48Address GetDestination() const;
     uint16_t GetTypeLength() const;
