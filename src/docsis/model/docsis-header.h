@@ -80,6 +80,9 @@ namespace ns3 {
       uint32_t GetSerializedSize (void) const;
     };
 
+    DocsisHeader();
+    DocsisHeader(size_t phyOverhead);
+
     virtual uint32_t Deserialize (Buffer::Iterator start);
     virtual uint32_t GetSerializedSize (void) const;
     virtual void Print (std::ostream &os) const;

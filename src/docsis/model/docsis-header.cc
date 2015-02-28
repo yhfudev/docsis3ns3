@@ -23,6 +23,14 @@
 
 namespace ns3 {
   // ************* DocsisHeader *************************************
+  DocsisHeader::DocsisHeader() : m_phyOverhead(0)
+  {
+  }
+
+  DocsisHeader::DocsisHeader(size_t phyOverhead) : m_phyOverhead(phyOverhead)
+  {
+  }
+
   uint32_t DocsisHeader::Deserialize (Buffer::Iterator start)
   {
     uint32_t readBytes = 0;
