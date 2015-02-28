@@ -43,7 +43,7 @@ main (int argc, char *argv[])
   n1->AddDevice (net1);
 
   Simulator::Schedule (Seconds (1.0), &SendOnePacket, net0, net1->GetAddress());
-  Simulator::Schedule (Seconds (2.0), &SendOnePacket, net1, net0->GetAddress());
+//  Simulator::Schedule (Seconds (2.0), &SendOnePacket, net1, net0->GetAddress());
 
   Simulator::Run ();
   Simulator::Destroy ();

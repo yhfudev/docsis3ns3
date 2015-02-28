@@ -206,16 +206,17 @@ CmtsDevice::SendFrom (Ptr< Packet > packet, const Address &source, const Address
   DocsisHeader dh;
   dh.setupPduPacket (m_downstreamOverhead, packet->GetSize (), kDownstream);
   packet->AddHeader (dh);
+  // **** Headers section ****
 
   PacketAddress pa;
   pa.packet = packet;
   pa.address = dest;
-  // **** Headers section ****
+  pa.channel = m_downstreamServices[dest].begin()->channel;
 
   m_packetQueue.push_back(pa);
-  if (m_dChannelsStatus[0] == kIdle)
+  if (m_dChannelsStatus[pa.channel] == kIdle)
   {
-    TransmitStart(m_packetQueue.front().packet, m_connectedDevices[m_packetQueue.front().address]);
+    TransmitStart(m_packetQueue.front().packet, m_connectedDevices[m_packetQueue.front().address], m_packetQueue.front ().channel);
     m_packetQueue.pop_front();
   }
   return true;
@@ -319,19 +320,36 @@ void
 CmtsDevice::CmAttached(Ptr<CmDevice> cm)
 {
 	m_connectedDevices[cm->GetAddress()] = cm;
+
+	ServiceStruct defaultUpService;
+	m_upstreamServices[cm->GetAddress()] = std::list<ServiceStruct>();
+	m_upstreamServices[cm->GetAddress()].push_back(defaultUpService);
+
+	ServiceStruct defaultDownService;
+	m_downstreamServices[cm->GetAddress()] = std::list<ServiceStruct>();
+	m_downstreamServices[cm->GetAddress()].push_back(defaultDownService);
 }
 
 void
 CmtsDevice::CmDeattached(Ptr<CmDevice> cm)
 {
 	m_connectedDevices.erase(cm->GetAddress());
+	m_upstreamServices.erase (cm->GetAddress());
+	m_downstreamServices.erase (cm->GetAddress());
 }
 
 void
 CmtsDevice::CmChangedAddress(Ptr<CmDevice> cm, Address old_address)
 {
-	m_connectedDevices.erase(old_address);
-	m_connectedDevices[cm->GetAddress()] = cm;
+  if (cm->GetAddress () == old_address) return;
+
+  m_connectedDevices[cm->GetAddress()] = cm;
+  m_upstreamServices[cm->GetAddress()] = m_upstreamServices[old_address];
+  m_downstreamServices[cm->GetAddress()] = m_downstreamServices[old_address];
+
+  m_connectedDevices.erase(old_address);
+  m_upstreamServices.erase (old_address);
+  m_downstreamServices.erase (old_address);
 }
 
 bool
@@ -346,33 +364,33 @@ CmtsDevice::Receive(Ptr< Packet > packet, Ptr<CmDevice> sender)
 }
 
 void
-CmtsDevice::TransmitStart(Ptr< Packet > packet, Ptr<CmDevice> destiny)
+CmtsDevice::TransmitStart(Ptr< Packet > packet, Ptr<CmDevice> destiny, uint32_t channel)
 {
-	NS_LOG_FUNCTION (this << packet << destiny);
+	NS_LOG_FUNCTION (this << packet << destiny << channel);
 	m_transmitStartTrace(packet);
 
-	m_dChannelsStatus[0] = kBusy;
+	m_dChannelsStatus[channel] = kBusy;
 
-	Time txTime = Seconds (m_channel->GetUpstreamDataRate(0).CalculateTxTime(packet->GetSize()));
+	Time txTime = Seconds (m_channel->GetUpstreamDataRate(channel).CalculateTxTime(packet->GetSize()));
 
-	Simulator::Schedule(txTime, &CmtsDevice::TransmitComplete, this);
-	m_channel->DownTransmitStart(0, packet, destiny, txTime);
+	Simulator::Schedule(txTime, &CmtsDevice::TransmitComplete, this, channel);
+	m_channel->DownTransmitStart(channel, packet, destiny, txTime);
 
 	m_lastPacket = packet;
 }
 
 void
-CmtsDevice::TransmitComplete()
+CmtsDevice::TransmitComplete(uint32_t channel)
 {
 	NS_LOG_FUNCTION (this);
 	m_transmitCompleteTrace(m_lastPacket);
 
 	m_lastPacket = NULL;
 
-	m_dChannelsStatus[0] = kIdle;
+	m_dChannelsStatus[channel] = kIdle;
 	if (!m_packetQueue.empty())
 	{
-		TransmitStart(m_packetQueue.front().packet, m_connectedDevices[m_packetQueue.front().address]);
+		TransmitStart(m_packetQueue.front().packet, m_connectedDevices[m_packetQueue.front().address], m_packetQueue.front ().channel);
 		m_packetQueue.pop_front();
 	}
 }

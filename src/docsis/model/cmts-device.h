@@ -36,6 +36,7 @@ struct PacketAddress
 {
 	Ptr<Packet> packet;
 	Address address;
+	uint32_t channel;
 };
 
 class CmtsDevice : public NetDevice
@@ -46,9 +47,10 @@ public:
 	~CmtsDevice ();
 
 	struct ServiceStruct{
-		uint32_t serviceId;
-		uint32_t channel;
-		DocsisUpstreamChannelMode mode;
+	  ServiceStruct() : serviceId(0), channel(0), mode(kUnsolicitedGrant) {}
+	  uint32_t serviceId;
+	  uint32_t channel;
+	  DocsisUpstreamChannelMode mode;
 	};
 
 	void AddLinkChangeCallback (Callback<void> callback);
@@ -85,8 +87,8 @@ public:
 	bool Receive(Ptr<Packet> packet, Ptr<CmDevice> sender);
 
 private:
-	void TransmitStart(Ptr< Packet > packet, Ptr<CmDevice> destiny);
-	void TransmitComplete();
+	void TransmitStart(Ptr< Packet > packet, Ptr<CmDevice> destiny, uint32_t channel);
+	void TransmitComplete(uint32_t channel);
 
 	uint32_t m_downstreamOverhead;
 	bool m_useLLC;
@@ -104,6 +106,8 @@ private:
 	std::list< PacketAddress > m_packetQueue;
 	std::vector<DocsisChannelStatus> m_dChannelsStatus;
 	std::map< Address, Ptr<CmDevice> > m_connectedDevices;
+	std::map< Address, std::list<ServiceStruct> > m_upstreamServices;
+	std::map< Address, std::list<ServiceStruct> > m_downstreamServices;
 	Ptr<Packet> m_lastPacket;
 
 	TracedCallback< Ptr<const Packet> > m_sendTrace;
