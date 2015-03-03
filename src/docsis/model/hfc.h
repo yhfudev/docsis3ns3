@@ -37,13 +37,6 @@ class Hfc : public Channel
 {
 public:
 
-	enum ChannelState
-	{
-		kChannelAvailable,
-		kChannelBusy,
-		ChannelStateCount
-	};
-
 	static TypeId GetTypeId (void);
 	Hfc ();
 	virtual ~Hfc ();
@@ -72,14 +65,17 @@ public:
 	void DownTransmitStart(uint32_t channel, Ptr<Packet> p, Ptr<CmDevice> cm, Time txTime);
 	void DownTransmitEnd(uint32_t channel, Ptr<Packet> p, Ptr<CmDevice> cm);
 
+	DocsisChannelStatus GetUpstreamChannelStatus(uint32_t channel);
+	DocsisChannelStatus GetDownstreamChannelStatus(uint32_t channel);
+
 private:
 	Ptr<CmtsDevice> m_cmts;
 	std::list< Ptr<CmDevice> > m_cmList;
 	uint32_t m_upstreamChannelsAmount;
 	uint32_t m_downstreamChannelsAmount;
 	DataRate m_stubDataRate;
-	ChannelState *m_upstreamChannelState;
-	ChannelState *m_downstreamChannelState;
+	DocsisChannelStatus *m_upstreamChannelState;
+	DocsisChannelStatus *m_downstreamChannelState;
 	EventId *m_upstreamChannelEvent;
 	EventId *m_downstreamChannelEvent;
 };

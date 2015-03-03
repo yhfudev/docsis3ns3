@@ -62,7 +62,7 @@ CmtsDevice::GetTypeId (void)
 	return tid;
 }
 
-CmtsDevice::CmtsDevice () : m_channels(0), m_transferRate(NULL), m_deviceIndex(0), m_mtu(1), m_linkUp(false), m_node(NULL), m_channel(NULL), m_dChannelsStatus(0), m_lastPacket(NULL)
+CmtsDevice::CmtsDevice () : m_channels(0), m_transferRate(NULL), m_deviceIndex(0), m_mtu(1), m_linkUp(false), m_node(NULL), m_hfc(NULL), m_packetQueues(0), m_lastPackets(0), m_channelSelector(nullptr)
 {
 }
 
@@ -94,7 +94,7 @@ CmtsDevice::GetBroadcast (void) const
 Ptr< Channel >
 CmtsDevice::GetChannel (void) const
 {
-	return m_channel;
+	return m_hfc;
 }
 
 
@@ -211,13 +211,13 @@ CmtsDevice::SendFrom (Ptr< Packet > packet, const Address &source, const Address
   PacketAddress pa;
   pa.packet = packet;
   pa.address = dest;
-  pa.channel = m_downstreamServices[dest].begin()->channel;
+  pa.channel = m_channelSelector==nullptr ? m_downstreamServices[dest].begin()->channel : m_channelSelector(m_hfc, m_packetQueues, m_downstreamServices[dest]);
 
-  m_packetQueue.push_back(pa);
-  if (m_dChannelsStatus[pa.channel] == kIdle)
+  m_packetQueues[pa.channel].push_back(pa);
+  if (m_hfc->GetDownstreamChannelStatus (pa.channel) == kIdle)
   {
-    TransmitStart(m_packetQueue.front().packet, m_connectedDevices[m_packetQueue.front().address], m_packetQueue.front ().channel);
-    m_packetQueue.pop_front();
+    TransmitStart(m_packetQueues[pa.channel].front().packet, m_connectedDevices[m_packetQueues[pa.channel].front().address], m_packetQueues[pa.channel].front ().channel);
+    m_packetQueues[pa.channel].pop_front();
   }
   return true;
 }
@@ -287,15 +287,16 @@ CmtsDevice::Attach(Ptr<Hfc> channel)
 	NS_LOG_FUNCTION (this << channel);
 	m_attachTrace(channel);
 
-	if (!m_channel)
+	if (!m_hfc)
 	{
 		Deattach();
 	}
 
-	m_channel = channel;
-	m_channel->Attach(this);
+	m_hfc = channel;
+	m_hfc->Attach(this);
 
-	m_dChannelsStatus.resize((int)m_channel->GetDownstreamChannelsAmount());
+	m_packetQueues.resize ((int)m_hfc->GetDownstreamChannelsAmount());
+	m_lastPackets.resize ((int)m_hfc->GetDownstreamChannelsAmount());
 
 	m_linkUp = true;
 	m_linkChangeCallbacks();
@@ -305,13 +306,13 @@ void
 CmtsDevice::Deattach()
 {
 	NS_LOG_FUNCTION (this);
-	m_deattachTrace(m_channel);
+	m_deattachTrace(m_hfc);
 
-	if (!m_channel)
+	if (!m_hfc)
 		return;
 
-	m_channel->Deattach(this);
-	m_channel = NULL;
+	m_hfc->Deattach(this);
+	m_hfc = NULL;
 	m_linkUp = false;
 	m_linkChangeCallbacks();
 }
@@ -364,34 +365,37 @@ CmtsDevice::Receive(Ptr< Packet > packet, Ptr<CmDevice> sender)
 }
 
 void
+CmtsDevice::RegisterChannelSelector(selector_t selector)
+{
+  m_channelSelector = selector;
+}
+
+void
 CmtsDevice::TransmitStart(Ptr< Packet > packet, Ptr<CmDevice> destiny, uint32_t channel)
 {
 	NS_LOG_FUNCTION (this << packet << destiny << channel);
 	m_transmitStartTrace(packet);
 
-	m_dChannelsStatus[channel] = kBusy;
-
-	Time txTime = Seconds (m_channel->GetUpstreamDataRate(channel).CalculateTxTime(packet->GetSize()));
+	Time txTime = Seconds (m_hfc->GetUpstreamDataRate(channel).CalculateTxTime(packet->GetSize()));
 
 	Simulator::Schedule(txTime, &CmtsDevice::TransmitComplete, this, channel);
-	m_channel->DownTransmitStart(channel, packet, destiny, txTime);
+	m_hfc->DownTransmitStart(channel, packet, destiny, txTime);
 
-	m_lastPacket = packet;
+	m_lastPackets[channel] = packet;
 }
 
 void
 CmtsDevice::TransmitComplete(uint32_t channel)
 {
 	NS_LOG_FUNCTION (this);
-	m_transmitCompleteTrace(m_lastPacket);
+	m_transmitCompleteTrace(m_lastPackets[channel]);
 
-	m_lastPacket = NULL;
+	m_lastPackets[channel] = NULL;
 
-	m_dChannelsStatus[channel] = kIdle;
-	if (!m_packetQueue.empty())
+	if (!m_packetQueues[channel].empty())
 	{
-		TransmitStart(m_packetQueue.front().packet, m_connectedDevices[m_packetQueue.front().address], m_packetQueue.front ().channel);
-		m_packetQueue.pop_front();
+		TransmitStart(m_packetQueues[channel].front().packet, m_connectedDevices[m_packetQueues[channel].front().address], m_packetQueues[channel].front ().channel);
+		m_packetQueues[channel].pop_front();
 	}
 }
 
