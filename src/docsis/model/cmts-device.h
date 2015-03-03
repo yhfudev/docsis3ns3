@@ -20,6 +20,7 @@
 #ifndef CMTS_DEVICE_H
 #define CMTS_DEVICE_H
 
+#include <functional>
 #include <map>
 #include "docsis-enums.h"
 #include "ns3/net-device.h"
@@ -84,6 +85,9 @@ public:
 	void CmDeattached(Ptr<CmDevice> cm);
 	void CmChangedAddress(Ptr<CmDevice> cm, Address old_address);
 
+typedef std::function< uint32_t( Ptr<Hfc>, std::vector< std::list< PacketAddress > >, std::list<ServiceStruct> ) > selector_t;
+	void RegisterChannelSelector(selector_t selector);
+
 	bool Receive(Ptr<Packet> packet, Ptr<CmDevice> sender);
 
 private:
@@ -100,15 +104,16 @@ private:
 	bool m_linkUp;
 	Ptr<Node> m_node;
 	Mac48Address m_address;
-	Ptr<Hfc> m_channel;
+	Ptr<Hfc> m_hfc;
 	TracedCallback<> m_linkChangeCallbacks;
 	ReceiveCallback m_rxCallback;
-	std::list< PacketAddress > m_packetQueue;
-	std::vector<DocsisChannelStatus> m_dChannelsStatus;
+	std::vector< std::list< PacketAddress > > m_packetQueues;
 	std::map< Address, Ptr<CmDevice> > m_connectedDevices;
 	std::map< Address, std::list<ServiceStruct> > m_upstreamServices;
 	std::map< Address, std::list<ServiceStruct> > m_downstreamServices;
-	Ptr<Packet> m_lastPacket;
+	std::vector< Ptr<Packet> > m_lastPackets;
+
+	selector_t m_channelSelector;
 
 	TracedCallback< Ptr<const Packet> > m_sendTrace;
 	TracedCallback< Ptr<const Packet> > m_transmitStartTrace;

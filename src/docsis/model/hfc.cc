@@ -43,8 +43,8 @@ Hfc::GetTypeId (void)
 
 Hfc::Hfc () : m_cmts(NULL), m_upstreamChannelsAmount(1), m_downstreamChannelsAmount(1), m_stubDataRate(40 Mbps)
 {
-	m_upstreamChannelState = new ChannelState[m_upstreamChannelsAmount];
-	m_downstreamChannelState = new ChannelState[m_downstreamChannelsAmount];
+	m_upstreamChannelState = new DocsisChannelStatus[m_upstreamChannelsAmount];
+	m_downstreamChannelState = new DocsisChannelStatus[m_downstreamChannelsAmount];
 	m_upstreamChannelEvent = new EventId[m_upstreamChannelsAmount];
 	m_downstreamChannelEvent = new EventId[m_downstreamChannelsAmount];
 }
@@ -149,7 +149,7 @@ Hfc::SetUpstreamChannelsAmount(uint32_t amount)
 {
 	m_upstreamChannelsAmount = amount;
 	delete[] m_upstreamChannelState;
-	m_upstreamChannelState = new ChannelState[amount];
+	m_upstreamChannelState = new DocsisChannelStatus[amount];
 	delete[] m_upstreamChannelEvent;
 	m_upstreamChannelEvent = new EventId[amount];
 }
@@ -159,7 +159,7 @@ Hfc::SetDownstreamChannelsAmount(uint32_t amount)
 {
 	m_downstreamChannelsAmount = amount;
 	delete[] m_downstreamChannelState;
-	m_downstreamChannelState = new ChannelState[amount];
+	m_downstreamChannelState = new DocsisChannelStatus[amount];
 	delete[] m_downstreamChannelEvent;
 	m_downstreamChannelEvent = new EventId[amount];
 }
@@ -169,19 +169,19 @@ Hfc::UpTransmitStart(uint32_t channel, Ptr<Packet> p, Ptr<CmDevice> cm, Time txT
 {
 	NS_ASSERT_MSG(channel < m_upstreamChannelsAmount, "Selected upstream channel is out of range.");
 
-	if (m_upstreamChannelState[channel] != kChannelAvailable)
+	if (m_upstreamChannelState[channel] != kIdle)
 	{
 		// TODO: busy channel handling.
 	}
 
-	m_upstreamChannelState[channel] = kChannelBusy;
+	m_upstreamChannelState[channel] = kBusy;
 	m_upstreamChannelEvent[channel] = Simulator::Schedule(txTime, &Hfc::UpTransmitEnd, this, channel, p, cm);
 }
 
 void
 Hfc::UpTransmitEnd(uint32_t channel, Ptr<Packet> p, Ptr<CmDevice> cm)
 {
-	m_upstreamChannelState[channel] = kChannelAvailable;
+	m_upstreamChannelState[channel] = kIdle;
 	Simulator::ScheduleWithContext(m_cmts->GetNode()->GetId(), Now(), &CmtsDevice::Receive, m_cmts, p, cm);
 }
 
@@ -190,20 +190,32 @@ Hfc::DownTransmitStart(uint32_t channel, Ptr<Packet> p, Ptr<CmDevice> cm, Time t
 {
 	NS_ASSERT_MSG(channel < m_downstreamChannelsAmount, "Selected downstream channel is out of range.");
 
-	if (m_downstreamChannelState[channel] != kChannelAvailable)
+	if (m_downstreamChannelState[channel] != kIdle)
 	{
 		// TODO: busy channel handling.
 	}
 
-	m_downstreamChannelState[channel] = kChannelBusy;
+	m_downstreamChannelState[channel] = kBusy;
 	m_downstreamChannelEvent[channel] = Simulator::Schedule(txTime, &Hfc::DownTransmitEnd, this, channel, p, cm);
 }
 
 void
 Hfc::DownTransmitEnd(uint32_t channel, Ptr<Packet> p, Ptr<CmDevice> cm)
 {
-	m_downstreamChannelState[channel] = kChannelAvailable;
+	m_downstreamChannelState[channel] = kIdle;
 	Simulator::ScheduleWithContext(cm->GetNode()->GetId(), Now(), &CmDevice::Receive, cm, p, channel);
+}
+
+DocsisChannelStatus
+Hfc::GetUpstreamChannelStatus(uint32_t channel)
+{
+  return m_upstreamChannelState[channel];
+}
+
+DocsisChannelStatus
+Hfc::GetDownstreamChannelStatus(uint32_t channel)
+{
+  return m_downstreamChannelState[channel];
 }
 
 }
