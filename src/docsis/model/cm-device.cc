@@ -63,7 +63,10 @@ namespace ns3 {
     return tid;
   }
 
-  CmDevice::CmDevice () : m_channels(0), m_transferRate(NULL), m_deviceIndex(0), m_mtu(1), m_linkUp(false), m_node(NULL), m_channel(NULL), m_uChannelStatus(0), m_lastPacket()
+  CmDevice::CmDevice () : m_channels(0), m_transferRate(NULL), m_deviceIndex(0),
+                          m_mtu(1), m_linkUp(false), m_node(NULL),
+                          m_channel(NULL), m_uChannelStatus(0), m_lastPacket(),
+                          m_timeDistance(0)
   {
   }
 
@@ -292,6 +295,18 @@ namespace ns3 {
     m_receiveTrace(packet);
 
     ProcessPacket(packet, channel);
+  }
+
+  void
+  CmDevice::SetTimeDistanceToCMTS(Time time)
+  {
+    m_timeDistance = time;
+  }
+
+  Time
+  CmDevice::GetTimeDistanceToCMTS()
+  {
+    return m_timeDistance;
   }
 
   void

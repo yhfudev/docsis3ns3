@@ -106,6 +106,9 @@ namespace ns3 {
 
     void Receive(Ptr< Packet > packet, uint32_t channel);
 
+    void SetTimeDistanceToCMTS(Time time);
+    Time GetTimeDistanceToCMTS();
+
   private:
     void TransmitStart(Ptr< Packet > packet, uint32_t channel);
     void TransmitComplete(uint32_t channel);
@@ -138,6 +141,8 @@ namespace ns3 {
     std::vector<DocsisChannelStatus> m_uChannelStatus;
     std::list<ServiceStruct> m_services;
     Ptr<Packet> m_lastPacket;
+
+    Time m_timeDistance;
 
     TracedCallback< Ptr<const Packet> > m_sendTrace;
     TracedCallback< Ptr<const Packet> > m_transmitStartTrace;

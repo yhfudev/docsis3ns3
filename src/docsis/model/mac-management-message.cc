@@ -96,7 +96,7 @@ namespace ns3 {
   uint32_t MAPHeader::Deserialize (Buffer::Iterator start) {
     m_ucId = start.ReadU8();
     m_ucdCount = start.ReadU8();
-    m_elementCount = start.ReadU8();
+    uint8_t elementCount = start.ReadU8();
     start.ReadU8();
 
     m_startTime = start.ReadU32();
@@ -108,7 +108,7 @@ namespace ns3 {
     m_dataEnd = start.ReadU8();
 
     m_ies.clear();
-    for(uint8_t i=0; i < m_elementCount; i++) {
+    for(uint8_t i=0; i < elementCount; i++) {
         InformationElement ie;
         ie.m_sid = start.ReadU16();
         ie.m_offset = start.ReadU16();
@@ -120,7 +120,7 @@ namespace ns3 {
         m_ies.push_back(ie);
       }
 
-    return 16 + m_elementCount*4;
+    return 16 + elementCount*4;
   }
 
   uint32_t MAPHeader::GetSerializedSize (void) const {
@@ -134,7 +134,7 @@ namespace ns3 {
   void MAPHeader::Serialize (Buffer::Iterator start) const {
     start.WriteU8(m_ucId);
     start.WriteU8(m_ucdCount);
-    start.WriteU8(m_elementCount);
+    start.WriteU8((uint8_t)m_ies.size ());
     start.WriteU8(0);
 
     start.WriteU32(m_startTime);
@@ -162,6 +162,27 @@ namespace ns3 {
   TypeId MAPHeader::GetInstanceTypeId (void) const
   {
     return GetTypeId();
+  }
+
+  void
+  MAPHeader::SetupMAP(uint8_t ucId, uint8_t ucdCount, uint32_t startTime, uint32_t ackTime, uint8_t rangingStart, uint8_t rangingEnd, uint8_t dataStart, uint8_t dataEnd)
+  {
+    m_ucId = ucId;
+    m_ucdCount = ucdCount;
+    m_startTime = startTime;
+    m_ackTime = ackTime;
+    m_rangingStart = rangingStart;
+    m_rangingEnd = rangingEnd;
+    m_dataStart = dataStart;
+    m_dataEnd = dataEnd;
+
+    m_ies.clear ();
+  }
+
+  void
+  MAPHeader::AddIE(InformationElement ie)
+  {
+    m_ies.push_back (ie);
   }
 
   MAPHeader::InfoElementIterator

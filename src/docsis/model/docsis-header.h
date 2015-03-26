@@ -20,7 +20,8 @@
 #ifndef DOCSIS_HEADER_H
 #define DOCSIS_HEADER_H
 
-#include "docsis.h"
+#include "ns3/header.h"
+#include "ns3/mac48-address.h"
 #include "docsis-enums.h"
 
 namespace ns3 {

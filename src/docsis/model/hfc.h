@@ -21,17 +21,18 @@
 #define HFC_H
 
 #include "docsis-enums.h"
-#include "cm-device.h"
-#include "cmts-device.h"
 #include "ns3/channel.h"
 #include "ns3/ptr.h"
 #include "ns3/data-rate.h"
 #include "ns3/event-id.h"
+#include "ns3/packet.h"
+#include "ns3/address.h"
 #include <list>
 
 namespace ns3 {
 
 class CmDevice;
+class CmtsDevice;
 
 class Hfc : public Channel
 {
