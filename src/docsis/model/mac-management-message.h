@@ -20,12 +20,15 @@
 #ifndef DOCSIS_MMM_H
 #define DOCSIS_MMM_H
 
-#include "docsis.h"
 #include "docsis-enums.h"
+#include "ns3/header.h"
+#include "ns3/mac48-address.h"
 
 namespace ns3 {
   class MacManagementMessageHeader : public Header {
   public:
+    static const uint32_t MAX_MMM_PACKET_SIZE = 1768;
+
     enum MmmType {
       kGenericUCD = 2,
       kMAP = 3,
@@ -89,6 +92,9 @@ namespace ns3 {
     static TypeId GetTypeId (void);
     virtual TypeId GetInstanceTypeId (void) const;
 
+    void SetupMAP(uint8_t ucId, uint8_t ucdCount, uint32_t startTime, uint32_t ackTime, uint8_t rangingStart, uint8_t rangingEnd, uint8_t dataStart, uint8_t dataEnd);
+    void AddIE(InformationElement ie);
+
     InfoElementIterator InfoElementBegin() const;
     InfoElementIterator InfoElementEnd() const;
     uint8_t GetUpstreamChannelId() const;
@@ -98,7 +104,6 @@ namespace ns3 {
   private:
     uint8_t m_ucId;
     uint8_t m_ucdCount;
-    uint8_t m_elementCount;
     uint32_t m_startTime;
     uint32_t m_ackTime;
     uint8_t m_rangingStart;

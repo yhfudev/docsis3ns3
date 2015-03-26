@@ -20,10 +20,12 @@
 #ifndef DOCSIS_H
 #define DOCSIS_H
 
+#include "docsis-enums.h"
+#include "docsis-header.h"
+#include "mac-management-message.h"
+#include "hfc.h"
 #include "cm-device.h"
 #include "cmts-device.h"
-#include "hfc.h"
-#include "docsis-enums.h"
 
 namespace ns3 {
 
